@@ -9,7 +9,7 @@ import SwiftUI
 import RealityKit
 
 struct EntitySettingsView: View {
-    @Environment(ContentViewModel.self) private var viewModel
+    @Environment(RealityService.self) private var realityService
     private let entity: Entity
     
     init(entity: Entity) {
@@ -18,21 +18,23 @@ struct EntitySettingsView: View {
     
     var body: some View {
         Form {
-            Section("Components") { 
-                Label("Foo", systemImage: "xmark")
+            Section("Components") {
+                
             }
         }
             .navigationTitle(entity.name)
             .toolbar { 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Remove Entity", systemImage: "trash") {
-                        viewModel.removeEntity(entity)
+                        realityService.mutateEntities {
+                            realityService.rootEntity.removeChild(entity)
+                        }
                     }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add Component", systemImage: "plus") { 
-                        viewModel.stack.append(.addComponent(entity: entity))
+                        realityService.stack.append(.addComponent(entity: entity))
                     }
                 }
             }

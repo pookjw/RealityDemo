@@ -9,7 +9,7 @@ import SwiftUI
 import RealityKit
 
 struct AddComponentView: View {
-    @Environment(ContentViewModel.self) private var viewModel
+    @Environment(RealityService.self) private var realityService
     private let entity: Entity
     
     init(entity: Entity) {

@@ -9,20 +9,20 @@ import SwiftUI
 import RealityKit
 
 struct ContentView: View {
+    @Environment(RealityService.self) private var realityService
     @State private var menuVisibility: Visibility = .visible
-    @State private var viewModel = ContentViewModel()
     
     var body: some View {
         GeometryReader3D { proxy in
             RealityView { (content: inout RealityViewContent, attachments: RealityViewAttachments) in
-                viewModel
+                realityService
                     .configureRealityView(
                         content: &content,
                         attachments: attachments,
                         boundingBox: bondingBox(content: &content, proxy: proxy)
                     )
             } update: { (content: inout RealityViewContent, attachments: RealityViewAttachments) in
-                viewModel
+                realityService
                     .updateRealityView(
                         content: &content,
                         attachments: attachments,
@@ -44,9 +44,18 @@ struct ContentView: View {
                 attachmentAnchor: .scene(.trailingFront),
                 contentAlignment: .leading
             ) {
-                NavigationStack(path: $viewModel.stack) { 
+                NavigationStack(
+                    path: Binding<[ContentStack]>(
+                        get: {
+                            realityService.stack
+                        },
+                        set: { newValue in
+                            realityService.stack = newValue
+                        }
+                    )
+                ) {
                     EntitiesView()
-                        .environment(viewModel)
+                        .environment(realityService)
                         .navigationDestination(for: ContentStack.self) { value in
                             Group {
                                 switch value {
@@ -58,16 +67,22 @@ struct ContentView: View {
                                     PhysicsBodyComponentView(entity: entity)
                                 }
                             }
-                            .environment(viewModel)
+                            .environment(realityService)
                         }
                 }
                 .frame(width: 400.0, height: proxy.size.height)
             }
-            .onChange(of: viewModel.entities, initial: true) { _, newValue in
-                var stack = viewModel.stack
+            .onChange(
+                of: {
+                    realityService.accessEntities()
+                    return realityService.rootEntity.children.array
+                }(),
+                initial: true
+            ) { _, newValue in
+                var stack = realityService.stack
                 var toBeRemovedIndices = IndexSet(integersIn: stack.indices)
                 
-                for entity in newValue {
+                for entity in realityService.rootEntity.children {
                     for index in stack.indices {
                         if stack[index].entity == entity {
                             toBeRemovedIndices.remove(index)
@@ -83,10 +98,12 @@ struct ContentView: View {
                     stack.remove(at: index)
                 }
                 
-                viewModel.stack = stack
+                realityService.stack = stack
             }
-            .onAppear { 
-                viewModel.stack.append(.entitySettings(entity: viewModel.addEntity()))
+            .onAppear {
+                realityService.mutateEntities {
+                    realityService.rootEntity.addChild(realityService.defaultEntity())
+                }
             }
         }
     }

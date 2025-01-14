@@ -1,72 +1,46 @@
 //
-//  ContentViewModel.swift
+//  RealityService.swift
 //  RealityDemo
 //
 //  Created by Jinwoo Kim on 1/14/25.
 //
 
 import Observation
-import RealityKit
+import RealityFoundation
 import _RealityKit_SwiftUI
 import Foundation
 
 @Observable
 @MainActor
-final class ContentViewModel {
+final class RealityService {
     var stack: [ContentStack] = []
-    private(set) var entities: [Entity] = []
-    @ObservationIgnored private var boundingBoxEntity: Entity?
-    
-    init() {
-        
-    }
+    let rootEntity = Entity()
+    private let boundingBoxEntity = Entity()
+    private let entitiesObservationKey: Void = ()
     
     func configureRealityView(content: inout RealityViewContent, attachments: RealityViewAttachments, boundingBox: BoundingBox) {
-        assert(boundingBoxEntity == nil)
+        assert(rootEntity.parent == nil)
+        content.add(rootEntity)
         
-        let boundingBoxEntity = Entity()
-        self.boundingBoxEntity = boundingBoxEntity
+        assert(boundingBoxEntity.parent == nil)
         content.add(boundingBoxEntity)
         
-        updateRealityView(content: &content, attachments: attachments, boundingBox: boundingBox)
+        RealityService.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
     }
     
     func updateRealityView(content: inout RealityViewContent, attachments: RealityViewAttachments, boundingBox: BoundingBox) {
-        guard let boundingBoxEntity else {
-            fatalError()
-        }
+        assert(rootEntity.parent != nil)
+        assert(boundingBoxEntity.parent != nil)
         
-        
-        ContentViewModel.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
-        access(keyPath: \.entities)
-        
-        var toBeAdded: [Entity] = []
-        var toBeRemoved: [Entity] = []
-        
-        for entity in _entities {
-            if !content.entities.contains(entity) {
-                toBeAdded.append(entity)
-            }
-        }
-        
-        for entity in content.entities {
-            if entity != boundingBoxEntity, !_entities.contains(entity) {
-                toBeRemoved.append(entity)
-            }
-        }
-        
-        for entity in toBeRemoved {
-            content.entities.remove(entity)
-        }
-        
-        content.entities.append(contentsOf: toBeAdded)
+        RealityService.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
     }
-    
-    @discardableResult
-    func addEntity(name: String = Date().description) -> Entity {
+}
+
+extension RealityService {
+    func defaultEntity() -> Entity {
         let entity = ModelEntity()
         
-        entity.name = name
+        entity.name = Date.now.description
         
         entity.model = ModelComponent(
             mesh: MeshResource.generateBox(size: .init(x: 0.1, y: 0.1, z: 0.1)),
@@ -75,16 +49,21 @@ final class ContentViewModel {
             ]
         )
         
-        entities.append(entity)
         return entity
     }
     
-    func removeEntity(_ entity: Entity) {
-        guard let firstIndex = _entities.firstIndex(of: entity) else {
-            fatalError()
-        }
+    func mutateEntities(_ block: () throws -> Void) rethrows {
+        let oldChildrenArray = rootEntity.children.array
+        try block()
+        let newChildrenArray = rootEntity.children.array
         
-        entities.remove(at: firstIndex)
+        if oldChildrenArray != newChildrenArray {
+            withMutation(keyPath: \.entitiesObservationKey, {})
+        }
+    }
+    
+    func accessEntities() {
+        access(keyPath: \.entitiesObservationKey)
     }
     
     private static func updateBoundingBoxEntity(_ boxEntity: Entity, boundingBox: BoundingBox) {
@@ -176,12 +155,5 @@ final class ContentViewModel {
             
             boxEntity.addChild(wallEntity)
         }
-    }
-}
-
-extension ContentViewModel {
-    @discardableResult
-    func addPhysicsBodyComponent() -> PhysicsBodyComponent {
-        fatalError()
     }
 }

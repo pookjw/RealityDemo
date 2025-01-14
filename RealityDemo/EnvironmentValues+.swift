@@ -9,5 +9,5 @@ import SwiftUI
 import RealityKit
 
 extension EnvironmentValues {
-    @Entry private(set) var viewModel: ContentViewModel! = nil
+    @Entry private(set) var realityService: RealityService! = nil
 }
