@@ -93,15 +93,122 @@ struct PhysicsBodyComponentView: View {
                     Slider(value: $wrapper.component.massProperties.mass, in: 0.0...100.0)
                 }
                 
-#warning("TODO")
+                HStack {
+                    Text("inertia.x")
+                    Slider(value: $wrapper.component.massProperties.inertia.x, in: 0.0...maxInertia.x)
+                }
+                
+                HStack {
+                    Text("inertia.y")
+                    Slider(value: $wrapper.component.massProperties.inertia.y, in: 0.0...maxInertia.y)
+                }
+                
+                HStack {
+                    Text("inertia.z")
+                    Slider(value: $wrapper.component.massProperties.inertia.z, in: 0.0...maxInertia.z)
+                }
+                
+                HStack {
+                    Text("centerOfMass.position.x")
+                    Slider(value: $wrapper.component.massProperties.centerOfMass.position.x, in: realityService.boundingBox.min.x...realityService.boundingBox.max.x)
+                }
+                
+                HStack {
+                    Text("centerOfMass.position.y")
+                    Slider(value: $wrapper.component.massProperties.centerOfMass.position.y, in: realityService.boundingBox.min.y...realityService.boundingBox.max.y)
+                }
+                
+                HStack {
+                    Text("centerOfMass.position.z")
+                    Slider(value: $wrapper.component.massProperties.centerOfMass.position.z, in: realityService.boundingBox.min.z...realityService.boundingBox.max.z)
+                }
+                
+                HStack {
+                    Text("centerOfMass.orientation.angle")
+                    Slider(
+                        value: Binding<Float>(
+                            get: {
+                                wrapper.component.massProperties.centerOfMass.orientation.angle
+                            },
+                            set: { newValue in
+                                let orientation = wrapper.component.massProperties.centerOfMass.orientation
+                                wrapper.component.massProperties.centerOfMass.orientation = simd_quatf(angle: newValue, axis: orientation.axis)
+                            }
+                        ),
+                        in: 0.0...(Float.pi * 2.0)
+                    )
+                }
+                
+                HStack {
+                    Text("centerOfMass.orientation.axis.x")
+                    Slider(
+                        value: Binding<Float>(
+                            get: {
+                                wrapper.component.massProperties.centerOfMass.orientation.axis.x
+                            },
+                            set: { newValue in
+                                let orientation = wrapper.component.massProperties.centerOfMass.orientation
+                                var axis = orientation.axis
+                                axis.x = newValue
+                                wrapper.component.massProperties.centerOfMass.orientation = simd_quatf(angle: orientation.angle, axis: axis)
+                            }
+                        ),
+                        in: -1.0...1.0
+                    )
+                }
+                
+                HStack {
+                    Text("centerOfMass.orientation.axis.y")
+                    Slider(
+                        value: Binding<Float>(
+                            get: {
+                                wrapper.component.massProperties.centerOfMass.orientation.axis.y
+                            },
+                            set: { newValue in
+                                let orientation = wrapper.component.massProperties.centerOfMass.orientation
+                                var axis = orientation.axis
+                                axis.y = newValue
+                                wrapper.component.massProperties.centerOfMass.orientation = simd_quatf(angle: orientation.angle, axis: axis)
+                            }
+                        ),
+                        in: -1.0...1.0
+                    )
+                }
+                
+                HStack {
+                    Text("centerOfMass.orientation.axis.z")
+                    Slider(
+                        value: Binding<Float>(
+                            get: {
+                                wrapper.component.massProperties.centerOfMass.orientation.axis.z
+                            },
+                            set: { newValue in
+                                let orientation = wrapper.component.massProperties.centerOfMass.orientation
+                                var axis = orientation.axis
+                                axis.z = newValue
+                                wrapper.component.massProperties.centerOfMass.orientation = simd_quatf(angle: orientation.angle, axis: axis)
+                            }
+                        ),
+                        in: -1.0...1.0
+                    )
+                }
             }
         }
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Remove Component", systemImage: "trash") {
+                    entity.components.remove(PhysicsBodyComponent.self)
+                    realityService.popToEntitySettings()
+                }
+                .labelStyle(.iconOnly)
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Done", systemImage: "checkmark") {
                     entity.components.set(wrapper.component)
                     realityService.popToEntitySettings()
                 }
+                .labelStyle(.iconOnly)
             }
         }
         .navigationTitle("PhysicsBodyComponent")
@@ -129,6 +236,24 @@ struct PhysicsBodyComponentView: View {
             
             wrapper = PhysicsBodyComponentWrapper(component: component)
         }
+        .onChange(of: wrapper.component.massProperties.mass, initial: true) { _, _ in
+            wrapper.component.massProperties.inertia.x = min(wrapper.component.massProperties.inertia.x, maxInertia.x)
+            wrapper.component.massProperties.inertia.y = min(wrapper.component.massProperties.inertia.y, maxInertia.x)
+            wrapper.component.massProperties.inertia.z = min(wrapper.component.massProperties.inertia.z, maxInertia.x)
+        }
+    }
+    
+    private var maxInertia: SIMD3<Float> {
+        guard let boundingBox = (entity as? ModelEntity)?.model?.mesh.bounds else {
+            return SIMD3<Float>(x: 30.0, y: 30.0, z: 30.0)
+        }
+        
+        // I = m * (r ^ 2)
+        return SIMD3<Float>(
+            x: wrapper.component.massProperties.mass * pow(boundingBox.max.x - boundingBox.min.x, 2),
+            y: wrapper.component.massProperties.mass * pow(boundingBox.max.y - boundingBox.min.y, 2),
+            z: wrapper.component.massProperties.mass * pow(boundingBox.max.z - boundingBox.min.z, 2)
+        )
     }
 }
 

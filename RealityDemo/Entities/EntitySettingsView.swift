@@ -23,6 +23,15 @@ struct EntitySettingsView: View {
                 let _ = viewModel.accessComponents()
                 ForEach(entity.components.array, id: \.componentName) { component in
                     NavigationLink(component.componentName, value: stack(from: component))
+                        .swipeActions(
+                            edge: .trailing,
+                            allowsFullSwipe: true
+                        ) {
+                            Button("Remove Component", systemImage: "trash") {
+                                entity.components.remove(type(of: component))
+                            }
+                            .tint(.red)
+                        }
                 }
             }
             
@@ -65,6 +74,7 @@ struct EntitySettingsView: View {
 extension Component {
     fileprivate var componentName: String {
         Self.__typeName
+//        String(describing: type(of: self))
     }
 }
 

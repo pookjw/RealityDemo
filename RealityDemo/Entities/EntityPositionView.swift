@@ -68,6 +68,10 @@ struct EntityPositionView: View {
                     in: realityService.boundingBox.min.z...realityService.boundingBox.max.z
                 )
             }
+            
+            Button("Center") { 
+                entity.position = realityService.boundingBox.center
+            }
         }
         .onChange(of: entity, initial: true) { _, newValue in
             viewModel.didChangeEntity(newValue)
