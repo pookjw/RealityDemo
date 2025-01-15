@@ -16,6 +16,7 @@ import Combine
 final class RealityService {
     var stack: [ContentStack] = []
     let rootEntity = Entity()
+    private(set) var boundingBox = BoundingBox()
     private let boundingBoxEntity = Entity()
     private let entitiesObservationKey: Void = ()
     @ObservationIgnored private var cancellables = Set<AnyCancellable>()
@@ -59,6 +60,7 @@ final class RealityService {
         
         self.cancellables = cancellables
         
+        self.boundingBox = boundingBox
         
         
         // DEBUG
@@ -66,7 +68,7 @@ final class RealityService {
         rootEntity.addChild(entity)
         _stack = [
             .entitySettings(entity: entity),
-            .physicsBodyComponent(entity: entity)
+//            .physicsBodyComponent(entity: entity)
         ]
     }
     
@@ -75,6 +77,7 @@ final class RealityService {
         assert(boundingBoxEntity.parent != nil)
         
         RealityService.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
+        self.boundingBox = boundingBox
     }
     
     func popToEntitySettings() {
@@ -102,6 +105,43 @@ extension RealityService {
                 SimpleMaterial(color: .init(white: .zero, alpha: 1.0), isMetallic: true)
             ]
         )
+        
+        //
+        
+        let material = entity
+            .model!
+            .materials
+            .last { $0 is PhysicsMaterialResource } as? PhysicsMaterialResource
+        
+        let shape = ShapeResource.generateConvex(from: entity.model!.mesh)
+        
+        var physicsBodyComponent = PhysicsBodyComponent(
+            massProperties: PhysicsMassProperties(shape: shape, mass: 50),
+            material: material,
+            mode: .dynamic
+        )
+        physicsBodyComponent.isAffectedByGravity = false
+        
+        entity.components.set(physicsBodyComponent)
+        
+        //
+        
+        let collisionComponent = CollisionComponent(
+            shapes: [shape]
+        )
+        entity.components.set(collisionComponent)
+        
+        //
+        
+        let hoverEffectComponent = HoverEffectComponent()
+        entity.components.set(hoverEffectComponent)
+        
+        //
+        
+        let inputTargetComponent = InputTargetComponent()
+        entity.components.set(inputTargetComponent)
+        
+        //
         
         return entity
     }

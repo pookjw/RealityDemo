@@ -25,6 +25,10 @@ struct EntitySettingsView: View {
                     NavigationLink(component.componentName, value: stack(from: component))
                 }
             }
+            
+            Section("Position") {
+                EntityPositionView(entity: entity)
+            }
         }
             .navigationTitle(entity.name)
             .toolbar { 
@@ -50,6 +54,8 @@ struct EntitySettingsView: View {
         switch component {
         case is PhysicsBodyComponent:
             return .physicsBodyComponent(entity: entity)
+        case is CollisionComponent:
+            return .collisionComponent(entity: entity)
         default:
             return nil
         }

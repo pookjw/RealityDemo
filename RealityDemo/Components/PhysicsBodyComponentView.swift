@@ -10,7 +10,7 @@ import RealityFoundation
 
 struct PhysicsBodyComponentView: View {
     @Environment(RealityService.self) private var realityService
-    @State private var component = PhysicsBodyComponent()
+    @State private var wrapper = PhysicsBodyComponentWrapper(component: PhysicsBodyComponent())
     private let entity: Entity
     
     init(entity: Entity) {
@@ -19,68 +19,87 @@ struct PhysicsBodyComponentView: View {
     
     var body: some View {
         Form {
-            Toggle("isContinuousCollisionDetectionEnabled", isOn: $component.isContinuousCollisionDetectionEnabled)
+            Toggle("isContinuousCollisionDetectionEnabled", isOn: $wrapper.component.isContinuousCollisionDetectionEnabled)
             
             Section("isRotationLocked") {
-                Toggle("X", isOn: $component.isRotationLocked.x)
-                Toggle("Y", isOn: $component.isRotationLocked.y)
-                Toggle("Z", isOn: $component.isRotationLocked.z)
+                Toggle("X", isOn: $wrapper.component.isRotationLocked.x)
+                Toggle("Y", isOn: $wrapper.component.isRotationLocked.y)
+                Toggle("Z", isOn: $wrapper.component.isRotationLocked.z)
             }
             
-            Toggle("isAffectedByGravity", isOn: $component.isAffectedByGravity)
+            Section("isTranslationLocked") {
+                Toggle("X", isOn: $wrapper.component.isTranslationLocked.x)
+                Toggle("Y", isOn: $wrapper.component.isTranslationLocked.y)
+                Toggle("Z", isOn: $wrapper.component.isTranslationLocked.z)
+            }
             
             Section("PhysicsBodyMode") {
                 Button {
-                    component.mode = .static
+                    wrapper.component.mode = .static
                 } label: {
                     Label {
                         Text("Static")
                     } icon: {
-                        if component.mode == .static {
+                        if wrapper.component.mode == .static {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
                 
                 Button {
-                    component.mode = .kinematic
+                    wrapper.component.mode = .kinematic
                 } label: {
                     Label {
                         Text("Kinematic")
                     } icon: {
-                        if component.mode == .kinematic {
+                        if wrapper.component.mode == .kinematic {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
                 
                 Button {
-                    component.mode = .dynamic
+                    wrapper.component.mode = .dynamic
                 } label: {
                     Label {
                         Text("Dynamic")
                     } icon: {
-                        if component.mode == .dynamic {
+                        if wrapper.component.mode == .dynamic {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
+            }
+            
+            Section {
+                Toggle("isAffectedByGravity", isOn: $wrapper.component.isAffectedByGravity)
+            }
+            
+            Section {
+                HStack {
+                    Text("angularDamping")
+                    Slider(value: $wrapper.component.angularDamping, in: 0.0...20.0)
+                }
+                
+                HStack {
+                    Text("linearDamping")
+                    Slider(value: $wrapper.component.linearDamping, in: 0.0...20.0)
+                }
+            }
+            
+            Section("massProperties") {
+                HStack {
+                    Text("mass (kilograms)")
+                    Slider(value: $wrapper.component.massProperties.mass, in: 0.0...100.0)
+                }
+                
+#warning("TODO")
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Done", systemImage: "checkmark") {
-//                    let shape: ShapeResource = .generateSphere(radius: 0.1)
-//                    var component: PhysicsBodyComponent = .init(
-//                        shapes: [shape],
-//                        density: 10_000
-//                    )
-//                    
-//                    component.isAffectedByGravity = true
-//                    entity.components.set(component)
-//                    entity.components.set(CollisionComponent(shapes: [shape]))
-                    
-                    entity.components.set(component)
+                    entity.components.set(wrapper.component)
                     realityService.popToEntitySettings()
                 }
             }
@@ -101,20 +120,28 @@ struct PhysicsBodyComponentView: View {
                     .last { $0 is PhysicsMaterialResource } as? PhysicsMaterialResource
                 
                 let shape = ShapeResource.generateConvex(from: model.mesh)
-//                component = PhysicsBodyComponent(
-//                    massProperties: PhysicsMassProperties(shape: shape, density: 10_000),
-//                    material: material,
-//                    mode: .kinematic
-//                )
-                component = .init(
-                                        shapes: [shape],
-                                        density: 10_000
-                                    )
+                component = PhysicsBodyComponent(
+                    massProperties: PhysicsMassProperties(shape: shape, mass: 50),
+                    material: material,
+                    mode: .dynamic
+                )
             }
             
-            self.component = component
+            wrapper = PhysicsBodyComponentWrapper(component: component)
         }
     }
+}
+
+fileprivate struct PhysicsBodyComponentWrapper: Equatable {
+    static func ==(lhs: PhysicsBodyComponentWrapper, rhs: PhysicsBodyComponentWrapper) -> Bool {
+        (lhs.component == rhs.component) &&
+        (lhs.component.isAffectedByGravity == rhs.component.isAffectedByGravity) &&
+        (lhs.component.angularDamping == rhs.component.angularDamping) &&
+        (lhs.component.linearDamping == rhs.component.linearDamping) &&
+        (lhs.component.massProperties == rhs.component.massProperties)
+    }
+    
+    var component: PhysicsBodyComponent
 }
 
 //#Preview {
