@@ -57,17 +57,16 @@ struct ContentView: View {
                     EntitiesView()
                         .environment(realityService)
                         .navigationDestination(for: ContentStack.self) { value in
-                            Group {
-                                switch value {
-                                case .entitySettings(let entity):
-                                    EntitySettingsView(entity: entity)
-                                case .addComponent(let entity):
-                                    AddComponentView(entity: entity)
-                                case .addPhysicsBodyComponent(let entity):
-                                    PhysicsBodyComponentView(entity: entity)
-                                }
+                            switch value {
+                            case .entitySettings(let entity):
+                                EntitySettingsView(entity: entity)
+                            case .addComponent(let entity):
+                                AddComponentView(entity: entity)
+                            case .physicsBodyComponent(let entity):
+                                PhysicsBodyComponentView(entity: entity)
+                            case .collisionComponent(let entity):
+                                CollisionComponentView(entity: entity)
                             }
-                            .environment(realityService)
                         }
                 }
                 .frame(width: 400.0, height: proxy.size.height)
@@ -82,12 +81,16 @@ struct ContentView: View {
                 var stack = realityService.stack
                 var toBeRemovedIndices = IndexSet(integersIn: stack.indices)
                 
-                for entity in realityService.rootEntity.children {
-                    for index in stack.indices {
-                        if stack[index].entity == entity {
-                            toBeRemovedIndices.remove(index)
-                            break
-                        }
+                for index in 0..<stack.count {
+                    let element = stack[index]
+                    
+                    guard let otherEntity = element.entity else {
+                        continue
+                    }
+                    
+                    if realityService.rootEntity.children.contains(otherEntity) {
+                        toBeRemovedIndices.remove(index)
+                        continue
                     }
                 }
                 
@@ -99,11 +102,6 @@ struct ContentView: View {
                 }
                 
                 realityService.stack = stack
-            }
-            .onAppear {
-                realityService.mutateEntities {
-                    realityService.rootEntity.addChild(realityService.defaultEntity())
-                }
             }
         }
     }

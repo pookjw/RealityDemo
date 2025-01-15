@@ -10,6 +10,7 @@ import RealityKit
 
 struct EntitySettingsView: View {
     @Environment(RealityService.self) private var realityService
+    @State private var viewModel = EntitySettingsViewModel()
     private let entity: Entity
     
     init(entity: Entity) {
@@ -19,16 +20,17 @@ struct EntitySettingsView: View {
     var body: some View {
         Form {
             Section("Components") {
-                
+                let _ = viewModel.accessComponents()
+                ForEach(entity.components.array, id: \.componentName) { component in
+                    NavigationLink(component.componentName, value: stack(from: component))
+                }
             }
         }
             .navigationTitle(entity.name)
             .toolbar { 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Remove Entity", systemImage: "trash") {
-                        realityService.mutateEntities {
-                            realityService.rootEntity.removeChild(entity)
-                        }
+                        realityService.rootEntity.removeChild(entity)
                     }
                 }
                 
@@ -38,6 +40,25 @@ struct EntitySettingsView: View {
                     }
                 }
             }
+            .onChange(of: entity, initial: true) { _, newValue in
+                viewModel.didChangeEntity(newValue)
+            }
+        
+    }
+    
+    private func stack(from component: any Component) -> ContentStack? {
+        switch component {
+        case is PhysicsBodyComponent:
+            return .physicsBodyComponent(entity: entity)
+        default:
+            return nil
+        }
+    }
+}
+
+extension Component {
+    fileprivate var componentName: String {
+        Self.__typeName
     }
 }
 

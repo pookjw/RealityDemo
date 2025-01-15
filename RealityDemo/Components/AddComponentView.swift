@@ -10,6 +10,7 @@ import RealityKit
 
 struct AddComponentView: View {
     @Environment(RealityService.self) private var realityService
+    @State private var component = PhysicsBodyComponent()
     private let entity: Entity
     
     init(entity: Entity) {
@@ -18,7 +19,9 @@ struct AddComponentView: View {
     
     var body: some View {
         Form { 
-            NavigationLink("PhysicsBodyComponent", value: ContentStack.addPhysicsBodyComponent(entity: entity))
+            NavigationLink("PhysicsBodyComponent", value: ContentStack.physicsBodyComponent(entity: entity))
+            
+            NavigationLink("CollisionComponent", value: ContentStack.collisionComponent(entity: entity))
         }
         .navigationTitle("Add Component")
     }

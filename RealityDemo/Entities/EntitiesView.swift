@@ -20,9 +20,7 @@ struct EntitiesView: View {
                     allowsFullSwipe: true
                 ) {
                     Button("Remove Entity", systemImage: "trash") {
-                        realityService.mutateEntities {
-                            realityService.rootEntity.removeChild(entity)
-                        }
+                        realityService.rootEntity.removeChild(entity)
                     }
                     .tint(.red)
                 }
@@ -31,9 +29,7 @@ struct EntitiesView: View {
         .toolbar { 
             ToolbarItem(placement: .topBarTrailing) { 
                 Button("Add Entity", systemImage: "plus") {
-                    realityService.mutateEntities {
-                        realityService.rootEntity.addChild(realityService.defaultEntity())
-                    }
+                    realityService.rootEntity.addChild(realityService.defaultEntity())
                 }
             }
         }

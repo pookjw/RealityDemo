@@ -5,12 +5,13 @@
 //  Created by Jinwoo Kim on 1/14/25.
 //
 
-import RealityKit
+import RealityFoundation
 
 enum ContentStack: Hashable {
     case entitySettings(entity: Entity)
     case addComponent(entity: Entity)
-    case addPhysicsBodyComponent(entity: Entity)
+    case physicsBodyComponent(entity: Entity)
+    case collisionComponent(entity: Entity)
     
     var entity: Entity? {
         switch self {
@@ -18,7 +19,9 @@ enum ContentStack: Hashable {
             return entity
         case .addComponent(let entity):
             return entity
-        case .addPhysicsBodyComponent(let entity):
+        case .physicsBodyComponent(let entity):
+            return entity
+        case .collisionComponent(let entity):
             return entity
         }
     }

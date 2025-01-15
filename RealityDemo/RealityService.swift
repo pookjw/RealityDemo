@@ -9,6 +9,7 @@ import Observation
 import RealityFoundation
 import _RealityKit_SwiftUI
 import Foundation
+import Combine
 
 @Observable
 @MainActor
@@ -17,8 +18,11 @@ final class RealityService {
     let rootEntity = Entity()
     private let boundingBoxEntity = Entity()
     private let entitiesObservationKey: Void = ()
+    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
     
     func configureRealityView(content: inout RealityViewContent, attachments: RealityViewAttachments, boundingBox: BoundingBox) {
+        let rootEntity = rootEntity
+        
         assert(rootEntity.parent == nil)
         content.add(rootEntity)
         
@@ -26,6 +30,44 @@ final class RealityService {
         content.add(boundingBoxEntity)
         
         RealityService.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
+        
+        guard let scene = rootEntity.scene ?? (Mirror(reflecting: content).descendant("scene") as? Scene) else {
+            fatalError()
+        }
+        
+        var cancellables = Set<AnyCancellable>(minimumCapacity: 5)
+        
+        scene
+            .subscribe(to: SceneEvents.DidAddEntity.self) { [weak self] event in
+                guard event.entity.parent == rootEntity else {
+                    return
+                }
+                
+                self?.withMutation(keyPath: \.entitiesObservationKey, {})
+            }
+            .store(in: &cancellables)
+        
+        scene
+            .subscribe(to: SceneEvents.WillRemoveEntity.self) { [weak self] event in
+                guard event.entity.parent == rootEntity else {
+                    return
+                }
+                
+                self?.withMutation(keyPath: \.entitiesObservationKey, {})
+            }
+            .store(in: &cancellables)
+        
+        self.cancellables = cancellables
+        
+        
+        
+        // DEBUG
+        let entity = defaultEntity()
+        rootEntity.addChild(entity)
+        _stack = [
+            .entitySettings(entity: entity),
+            .physicsBodyComponent(entity: entity)
+        ]
     }
     
     func updateRealityView(content: inout RealityViewContent, attachments: RealityViewAttachments, boundingBox: BoundingBox) {
@@ -33,6 +75,18 @@ final class RealityService {
         assert(boundingBoxEntity.parent != nil)
         
         RealityService.updateBoundingBoxEntity(boundingBoxEntity, boundingBox: boundingBox)
+    }
+    
+    func popToEntitySettings() {
+        stack = stack
+            .filter { stack in
+                switch stack {
+                case .entitySettings:
+                    return true
+                default:
+                    return false
+                }
+            }
     }
 }
 
@@ -50,16 +104,6 @@ extension RealityService {
         )
         
         return entity
-    }
-    
-    func mutateEntities(_ block: () throws -> Void) rethrows {
-        let oldChildrenArray = rootEntity.children.array
-        try block()
-        let newChildrenArray = rootEntity.children.array
-        
-        if oldChildrenArray != newChildrenArray {
-            withMutation(keyPath: \.entitiesObservationKey, {})
-        }
     }
     
     func accessEntities() {
