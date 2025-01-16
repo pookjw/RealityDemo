@@ -26,8 +26,8 @@ struct EntitiesView: View {
                 }
         }
         .navigationTitle("Entities")
-        .toolbar { 
-            ToolbarItem(placement: .topBarTrailing) { 
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("Add Entity", systemImage: "plus") {
                     realityService.rootEntity.addChild(realityService.defaultEntity())
                 }

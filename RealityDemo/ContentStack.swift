@@ -5,6 +5,7 @@
 //  Created by Jinwoo Kim on 1/14/25.
 //
 
+import SwiftUI
 import RealityFoundation
 
 enum ContentStack: Hashable {

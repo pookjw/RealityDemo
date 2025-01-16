@@ -19,17 +19,58 @@ struct CollisionComponentView: View {
     
     var body: some View {
         Form {
-            
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Done", systemImage: "checkmark") {
-                    entity.components.set(component)
-                    realityService.popToEntitySettings()
+            Section("Mode") {
+                Button {
+                    component.mode = .default
+                } label: {
+                    Label {
+                        Text("Default")
+                    } icon: {
+                        if component.mode == .default {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                Button {
+                    component.mode = .trigger
+                } label: {
+                    Label {
+                        Text("Trigger")
+                    } icon: {
+                        if component.mode == .trigger {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                Button {
+                    component.mode = .colliding
+                } label: {
+                    Label {
+                        Text("Colliding")
+                    } icon: {
+                        if component.mode == .colliding {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                NavigationLink("filter.group") {
+                    CollisionGroupsView(selectedGroup: $component.filter.group)
+                }
+                
+                NavigationLink("filter.mask") {
+                    CollisionGroupsView(selectedGroup: $component.filter.mask)
                 }
             }
         }
-        .onChange(of: entity, initial: true) { _, newValue in
+        .toolbar {
+            componentToolbarItems(entity: entity, component: component, realityService: realityService)
+        }
+        .onChange(of: entity, initial: true) { oldValue, newValue in
+            guard oldValue != newValue else { return }
+            
             let component: CollisionComponent
             if let _component = newValue.components[CollisionComponent.self] {
                 component = _component
@@ -42,7 +83,9 @@ struct CollisionComponentView: View {
                 let shape = ShapeResource.generateConvex(from: model.mesh)
                 
                 component = CollisionComponent(
-                    shapes: [shape]
+                    shapes: [shape],
+                    mode: .colliding,
+                    filter: .init(group: .default, mask: .default)
                 )
             }
             

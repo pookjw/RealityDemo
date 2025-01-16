@@ -85,6 +85,7 @@ struct ContentView: View {
                     let element = stack[index]
                     
                     guard let otherEntity = element.entity else {
+                        toBeRemovedIndices.remove(index)
                         continue
                     }
                     

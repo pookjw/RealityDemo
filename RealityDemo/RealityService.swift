@@ -17,6 +17,13 @@ final class RealityService {
     var stack: [ContentStack] = []
     let rootEntity = Entity()
     private(set) var boundingBox = BoundingBox()
+    
+    var collisionGroups: [CollisionGroup: String] = [
+        .default: "Default",
+        .all: "All",
+        .sceneUnderstanding: "Scene Understanding"
+    ]
+    
     private let boundingBoxEntity = Entity()
     private let entitiesObservationKey: Void = ()
     @ObservationIgnored private var cancellables = Set<AnyCancellable>()
@@ -66,8 +73,9 @@ final class RealityService {
         // DEBUG
         let entity = defaultEntity()
         rootEntity.addChild(entity)
-        _stack = [
+        stack = [
             .entitySettings(entity: entity),
+            .collisionComponent(entity: entity)
 //            .physicsBodyComponent(entity: entity)
         ]
     }
@@ -133,7 +141,9 @@ extension RealityService {
         //
         
         let collisionComponent = CollisionComponent(
-            shapes: [shape]
+            shapes: [shape],
+            mode: .colliding,
+            filter: .init(group: .default, mask: .default)
         )
         entity.components.set(collisionComponent)
         
@@ -220,10 +230,15 @@ extension RealityService {
             
             let boxShape = ShapeResource.generateBox(size: size)
             
+//            let collisionComponent = CollisionComponent(
+//                shapes: [boxShape],
+//                isStatic: true, // collider이 고정인지 아닌지 - 고정이라면 true로 하면 성능에 좋아질 것
+//                filter: .sensor
+//            )
             let collisionComponent = CollisionComponent(
                 shapes: [boxShape],
-                isStatic: true, // collider이 고정인지 아닌지 - 고정이라면 true로 하면 성능에 좋아질 것
-                filter: .sensor
+                mode: .colliding,
+                filter: .init(group: .default, mask: .default)
             )
             
             var physicsBodyComponent = PhysicsBodyComponent(
