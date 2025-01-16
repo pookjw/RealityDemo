@@ -129,12 +129,6 @@ extension RealityService {
             mode: .dynamic
         )
         physicsBodyComponent.isAffectedByGravity = true
-        print(physicsBodyComponent.massProperties.centerOfMass.orientation.angle)
-        print(physicsBodyComponent.massProperties.centerOfMass.orientation.axis)
-        /*
-         4.621986
-         SIMD3<Float>(0.85877866, -0.26993737, 0.43546885)
-         */
         
         entity.components.set(physicsBodyComponent)
         

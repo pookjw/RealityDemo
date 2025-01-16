@@ -11,6 +11,7 @@ import RealityFoundation
 struct CollisionComponentView: View {
     @Environment(RealityService.self) private var realityService
     @State private var component = CollisionComponent(shapes: [])
+    @State private var currentEntity: Entity?
     private let entity: Entity
     
     init(entity: Entity) {
@@ -55,7 +56,9 @@ struct CollisionComponentView: View {
                         }
                     }
                 }
-                
+            }
+            
+            Section("filter") {
                 NavigationLink("filter.group") {
                     CollisionGroupsView(selectedGroup: $component.filter.group)
                 }
@@ -64,12 +67,16 @@ struct CollisionComponentView: View {
                     CollisionGroupsView(selectedGroup: $component.filter.mask)
                 }
             }
+            
+            Text("shapes (TODO)")
         }
+        .navigationTitle("CollisionComponent")
         .toolbar {
             componentToolbarItems(entity: entity, component: component, realityService: realityService)
         }
         .onChange(of: entity, initial: true) { oldValue, newValue in
-            guard oldValue != newValue else { return }
+            guard currentEntity != newValue else { return }
+            currentEntity = newValue
             
             let component: CollisionComponent
             if let _component = newValue.components[CollisionComponent.self] {

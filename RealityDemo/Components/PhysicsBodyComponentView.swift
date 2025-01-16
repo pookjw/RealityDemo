@@ -87,6 +87,8 @@ struct PhysicsBodyComponentView: View {
                 }
             }
             
+            Text("material (TODO)")
+            
             Section("massProperties") {
                 HStack {
                     Text("mass (kilograms)")

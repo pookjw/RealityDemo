@@ -41,7 +41,7 @@ struct CollisionGroupsView: View {
                 }
             }
         }
-        .navigationTitle(realityService.collisionGroups.count.description)
+        .navigationTitle("CollisionGroup")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add Collision Group", systemImage: "plus") {
