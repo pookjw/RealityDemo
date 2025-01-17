@@ -13,6 +13,7 @@ struct MeshResourcesView: View {
     private let meshResourceHandler: (MeshResource) -> Void
     @State private var selectedPrimitiveMesh = PrimitiveMesh.xy_plane
     @State private var descriptor = PrimitiveMesh.AnyDescriptor(erasing: PrimitiveMesh.xy_plane.defaultDescriptor)
+    @State private var pop = false
     
     init(meshResourceHandler: @escaping (MeshResource) -> Void) {
         self.meshResourceHandler = meshResourceHandler
@@ -51,11 +52,12 @@ struct MeshResourcesView: View {
                 }
             }
         }
+        .pop(pop)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Done", systemImage: "checkmark") {
                     meshResourceHandler(descriptor.meshResource)
-//                    realityService.stack.removeLast()
+                    pop = true
                 }
                 .labelStyle(.iconOnly)
             }
@@ -306,6 +308,22 @@ extension PrimitiveMesh {
             KeyPathDescriptor(keyPath: \Self.height, title: "Height", dataType: .float(0.0...1.0)),
             KeyPathDescriptor(keyPath: \Self.radius, title: "Radius", dataType: .float(0.0...1.0))
             
+        ]
+    }
+}
+
+extension PrimitiveMesh {
+    struct Cylinder: Descriptor {
+        var height: Float
+        var radius: Float
+        
+        var meshResource: MeshResource {
+            .generateCylinder(height: height, radius: radius)
+        }
+        
+        let keyPaths: [PrimitiveMesh.KeyPathDescriptor] = [
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.height, title: "Height", dataType: .float(0.0...1.0)),
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.height, title: "Radius", dataType: .float(0.0...1.0))
         ]
     }
 }
