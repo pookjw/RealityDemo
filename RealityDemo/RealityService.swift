@@ -74,8 +74,9 @@ final class RealityService {
         let entity = defaultEntity()
         rootEntity.addChild(entity)
         stack = [
-            .entitySettings(entity: entity),
-            .collisionComponent(entity: entity)
+            .modelComponent(entity: entity)
+//            .entitySettings(entity: entity),
+//            .collisionComponent(entity: entity)
 //            .physicsBodyComponent(entity: entity)
         ]
     }
@@ -98,6 +99,10 @@ final class RealityService {
                     return false
                 }
             }
+    }
+    
+    func faceEntity(for face: Face) -> Entity? {
+        boundingBoxEntity.findEntity(named: face.rawValue)
     }
 }
 
@@ -161,41 +166,9 @@ extension RealityService {
     }
     
     private static func updateBoundingBoxEntity(_ boxEntity: Entity, boundingBox: BoundingBox) {
-        boxEntity.children.removeAll()
-        
         let min: SIMD3<Float> = boundingBox.min
         let max: SIMD3<Float> = boundingBox.max
         let center: SIMD3<Float> = boundingBox.center
-        
-        /*
-           +---------------+
-          /|              /|
-         / |     4       / |
-         +--------------+  |
-         | |            |  |
-         |1|      5     | 2|
-         | |            |  |
-         | |    6       |  |
-         | +------------|--+
-         |/      3      | /
-         +--------------+/
-         
-           y+
-           |
-           +- x+
-          /
-         z+
-         
-         lHandFace : 1
-         rHandFace : 2
-         lowerFace : 3
-         upperFace : 4
-         nearFace : 5
-         afarFace : 6
-         */
-        enum Face: CaseIterable {
-            case lHandFace, rHandFace, lowerFace, upperFace, nearFace, afarFace
-        }
         
         for face in Face.allCases {
             let thickness: Float = 1E-3
@@ -243,16 +216,26 @@ extension RealityService {
             )
             physicsBodyComponent.isAffectedByGravity = false
             
-            let wallEntity = ModelEntity(components: [collisionComponent, physicsBodyComponent])
-            wallEntity.position = position
-            wallEntity.model = ModelComponent(
+            let faceEntity: ModelEntity
+            if let _faceEntity = boxEntity.findEntity(named: face.rawValue) {
+                faceEntity = _faceEntity as! ModelEntity
+            } else {
+                faceEntity = ModelEntity()
+                faceEntity.name = face.rawValue
+                
+                boxEntity.addChild(faceEntity)
+            }
+            
+            faceEntity.components.set(collisionComponent)
+            faceEntity.components.set(physicsBodyComponent)
+            
+            faceEntity.position = position
+            faceEntity.model = ModelComponent(
                 mesh: MeshResource.generateBox(size: size),
                 materials: [
                     SimpleMaterial(color: .init(white: 1.0, alpha: 0.1), isMetallic: true)
                 ]
             )
-            
-            boxEntity.addChild(wallEntity)
         }
     }
 }

@@ -13,6 +13,8 @@ enum ContentStack: Hashable {
     case addComponent(entity: Entity)
     case physicsBodyComponent(entity: Entity)
     case collisionComponent(entity: Entity)
+    case modelComponent(entity: Entity)
+    case faces
     
     var entity: Entity? {
         switch self {
@@ -24,6 +26,10 @@ enum ContentStack: Hashable {
             return entity
         case .collisionComponent(let entity):
             return entity
+        case .modelComponent(let entity):
+            return entity
+        case .faces:
+            return nil
         }
     }
 }

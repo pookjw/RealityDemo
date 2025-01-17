@@ -11,6 +11,7 @@ import RealityFoundation
 struct PhysicsBodyComponentView: View {
     @Environment(RealityService.self) private var realityService
     @State private var wrapper = PhysicsBodyComponentWrapper(component: PhysicsBodyComponent())
+    @State private var currentEntity: Entity?
     private let entity: Entity
     
     init(entity: Entity) {
@@ -200,7 +201,10 @@ struct PhysicsBodyComponentView: View {
             componentToolbarItems(entity: entity, component: wrapper.component, realityService: realityService)
         }
         .navigationTitle("PhysicsBodyComponent")
-        .onChange(of: entity, initial: true) { _, newValue in
+        .onChange(of: entity, initial: true) { oldValue, newValue in
+            guard currentEntity != newValue else { return }
+            currentEntity = newValue
+            
             let component: PhysicsBodyComponent
             if let _component = newValue.components[PhysicsBodyComponent.self] {
                 component = _component

@@ -59,13 +59,17 @@ struct ContentView: View {
                         .navigationDestination(for: ContentStack.self) { value in
                             switch value {
                             case .entitySettings(let entity):
-                                EntitySettingsView(entity: entity)
+                                EntityView(entity: entity)
                             case .addComponent(let entity):
                                 AddComponentView(entity: entity)
                             case .physicsBodyComponent(let entity):
                                 PhysicsBodyComponentView(entity: entity)
                             case .collisionComponent(let entity):
                                 CollisionComponentView(entity: entity)
+                            case .modelComponent(let entity):
+                                ModelComponentView(entity: entity)
+                            case .faces:
+                                FacesView()
                             }
                         }
                 }

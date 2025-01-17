@@ -1,5 +1,5 @@
 //
-//  EntitySettingsViewModel.swift
+//  EntityViewModel.swift
 //  RealityDemo
 //
 //  Created by Jinwoo Kim on 1/15/25.
@@ -12,7 +12,7 @@ import Combine
 
 @MainActor
 @Observable
-final class EntitySettingsViewModel {
+final class EntityViewModel {
     @ObservationIgnored private(set) var entity: Entity?
     @ObservationIgnored private var cancellables = Set<AnyCancellable>()
     
@@ -21,6 +21,7 @@ final class EntitySettingsViewModel {
     func didChangeEntity(_ entity: Entity) {
         self.entity = entity
         
+        print(entity.parent)
         guard let scene = entity.scene else {
             fatalError()
         }
@@ -63,7 +64,7 @@ final class EntitySettingsViewModel {
     }
 }
 
-extension EntitySettingsViewModel {
+extension EntityViewModel {
     func accessComponents() {
         access(keyPath: \.componentsObservationKey)
     }

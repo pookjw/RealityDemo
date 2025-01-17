@@ -28,6 +28,12 @@ struct EntitiesView: View {
         .navigationTitle("Entities")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button("Faces", systemImage: "shippingbox") {
+                    realityService.stack.append(.faces)
+                }
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("Add Entity", systemImage: "plus") {
                     realityService.rootEntity.addChild(realityService.defaultEntity())
                 }

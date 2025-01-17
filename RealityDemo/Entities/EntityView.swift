@@ -1,5 +1,5 @@
 //
-//  EntitySettingsView.swift
+//  EntityView.swift
 //  RealityDemo
 //
 //  Created by Jinwoo Kim on 1/14/25.
@@ -8,9 +8,9 @@
 import SwiftUI
 import RealityKit
 
-struct EntitySettingsView: View {
+struct EntityView: View {
     @Environment(RealityService.self) private var realityService
-    @State private var viewModel = EntitySettingsViewModel()
+    @State private var viewModel = EntityViewModel()
     private let entity: Entity
     
     init(entity: Entity) {
@@ -65,6 +65,8 @@ struct EntitySettingsView: View {
             return .physicsBodyComponent(entity: entity)
         case is CollisionComponent:
             return .collisionComponent(entity: entity)
+        case is ModelComponent:
+            return .modelComponent(entity: entity)
         default:
             return nil
         }
@@ -79,5 +81,5 @@ extension Component {
 }
 
 //#Preview {
-//    EntitySettingsView()
+//    EntityView()
 //}
