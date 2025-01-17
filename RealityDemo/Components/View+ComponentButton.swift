@@ -24,7 +24,7 @@ extension View {
             .labelStyle(.iconOnly)
         }
         
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: placement) {
             Button("Done", systemImage: "checkmark") {
                 entity.components.set(component)
                 realityService.popToEntitySettings()

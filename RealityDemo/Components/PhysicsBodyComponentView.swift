@@ -198,7 +198,21 @@ struct PhysicsBodyComponentView: View {
             }
         }
         .toolbar {
-            componentToolbarItems(entity: entity, component: wrapper.component, realityService: realityService)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Remove Component", systemImage: "trash") {
+                    entity.components.remove(PhysicsBodyComponent.self)
+                    realityService.popToEntitySettings()
+                }
+                .labelStyle(.iconOnly)
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done", systemImage: "checkmark") {
+                    entity.components.set(wrapper.component)
+                    realityService.popToEntitySettings()
+                }
+                .labelStyle(.iconOnly)
+            }
         }
         .navigationTitle("PhysicsBodyComponent")
         .onChange(of: entity, initial: true) { oldValue, newValue in

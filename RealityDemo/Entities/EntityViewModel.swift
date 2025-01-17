@@ -21,7 +21,6 @@ final class EntityViewModel {
     func didChangeEntity(_ entity: Entity) {
         self.entity = entity
         
-        print(entity.parent)
         guard let scene = entity.scene else {
             fatalError()
         }

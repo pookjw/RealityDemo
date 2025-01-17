@@ -53,7 +53,7 @@ struct ModelComponentView: View {
 }
 
 extension ModelComponent {
-    fileprivate static var defaultComponent: ModelComponent {
+    @MainActor fileprivate static var defaultComponent: ModelComponent {
         ModelComponent(
             mesh: MeshResource.generateBox(size: .init(x: 0.1, y: 0.1, z: 0.1)),
             materials: [
