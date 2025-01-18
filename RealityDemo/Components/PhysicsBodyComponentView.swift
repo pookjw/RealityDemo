@@ -199,7 +199,7 @@ struct PhysicsBodyComponentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Remove Component", systemImage: "trash") {
+                Button("Remove Component", systemImage: "trash", role: .destructive) {
                     entity.components.remove(PhysicsBodyComponent.self)
                     realityService.popToEntitySettings()
                 }

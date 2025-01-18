@@ -22,6 +22,8 @@ struct AddComponentView: View {
             NavigationLink("PhysicsBodyComponent", value: ContentStack.physicsBodyComponent(entity: entity))
             
             NavigationLink("CollisionComponent", value: ContentStack.collisionComponent(entity: entity))
+            
+            NavigationLink("ModelComponent", value: ContentStack.modelComponent(entity: entity))
         }
         .navigationTitle("Add Component")
     }

@@ -19,10 +19,9 @@ struct EntitiesView: View {
                     edge: .trailing,
                     allowsFullSwipe: true
                 ) {
-                    Button("Remove Entity", systemImage: "trash") {
+                    Button("Remove Entity", systemImage: "trash", role: .destructive) {
                         realityService.rootEntity.removeChild(entity)
                     }
-                    .tint(.red)
                 }
         }
         .navigationTitle("Entities")

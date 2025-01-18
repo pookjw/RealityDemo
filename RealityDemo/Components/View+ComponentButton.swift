@@ -17,7 +17,7 @@ extension View {
         placement: ToolbarItemPlacement = .topBarTrailing
     ) -> some ToolbarContent {
         ToolbarItem(placement: placement) {
-            Button("Remove Component", systemImage: "trash") {
+            Button("Remove Component", systemImage: "trash", role: .destructive) {
                 entity.components.remove(type(of: component))
                 realityService.popToEntitySettings()
             }

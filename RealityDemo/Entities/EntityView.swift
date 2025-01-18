@@ -27,10 +27,9 @@ struct EntityView: View {
                             edge: .trailing,
                             allowsFullSwipe: true
                         ) {
-                            Button("Remove Component", systemImage: "trash") {
+                            Button("Remove Component", systemImage: "trash", role: .destructive) {
                                 entity.components.remove(type(of: component))
                             }
-                            .tint(.red)
                         }
                 }
             }
@@ -42,7 +41,7 @@ struct EntityView: View {
             .navigationTitle(entity.name)
             .toolbar { 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Remove Entity", systemImage: "trash") {
+                    Button("Remove Entity", systemImage: "trash", role: .destructive) {
                         realityService.rootEntity.removeChild(entity)
                     }
                 }

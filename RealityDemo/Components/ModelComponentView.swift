@@ -25,15 +25,28 @@ struct ModelComponentView: View {
             NavigationLink("MeshResource") {
                 MeshResourcesView { mesh in
                     component.mesh = mesh
-                    
-                    // ExtrudingText을 쓴다면
-//                    component.materials = []
                 }
             }
             
             Section("Materials") {
                 ForEach(component.materials.map({ AnyMaterial(material: $0) })) { material in
-                    Text(material.unwrappedValue.__resource.name)
+                    NavigationLink(String(String(describing: type(of: material.unwrappedValue)))) {
+                        if let simpleMaterial = material.unwrappedValue as? SimpleMaterial {
+                            SimpleMaterialView(
+                                simpleMaterial: simpleMaterial,
+                                didChangeHandler: { result in
+                                    update(material: result)
+                                }
+                            )
+                        } else {
+                            Text("Unknown Material Type")
+                        }
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button("Remove", systemImage: "trash", role: .destructive) {
+                            remove(material: material.unwrappedValue)
+                        }
+                    }
                 }
             }
             
@@ -44,11 +57,19 @@ struct ModelComponentView: View {
         }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Remove Component", systemImage: "trash") {
+                    Button("Remove Component", systemImage: "trash", role: .destructive) {
                         entity.components.remove(ModelComponent.self)
                         realityService.popToEntitySettings()
                     }
                     .labelStyle(.iconOnly)
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        AddMaterialView(component: $component)
+                    } label: {
+                        Label("Add Material", systemImage: "light.overhead.left.fill")
+                    }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -80,6 +101,39 @@ struct ModelComponentView: View {
                 
                 self.component = component
             }
+    }
+    
+    private func update(material: any RealityFoundation.Material) {
+        var materials: [any RealityFoundation.Material] = component.materials
+        
+        guard let firstIndex = materials
+            .firstIndex(
+                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() })
+        else {
+            print("No Material found")
+            return
+        }
+        
+        materials.remove(at: firstIndex)
+        materials.insert(material, at: firstIndex)
+        
+        component.materials = materials
+    }
+    
+    private func remove(material: any RealityFoundation.Material) {
+        var materials: [any RealityFoundation.Material] = component.materials
+        
+        guard let firstIndex = materials
+            .firstIndex(
+                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() })
+        else {
+            print("No Material found")
+            return
+        }
+        
+        materials.remove(at: firstIndex)
+        
+        component.materials = materials
     }
 }
 
