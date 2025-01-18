@@ -32,7 +32,9 @@ struct ModelComponentView: View {
             }
             
             Section("Materials") {
-                
+                ForEach(component.materials.map({ AnyMaterial(material: $0) })) { material in
+                    Text(material.unwrappedValue.__resource.name)
+                }
             }
             
             HStack {
@@ -92,10 +94,14 @@ extension ModelComponent {
     }
 }
 
-fileprivate struct MaterialWrapper: Identifiable {
-    let material: (any Material)
+fileprivate struct AnyMaterial: Identifiable {
+    let unwrappedValue: (any RealityFoundation.Material)
     
-    init(material: any Material) {
-        self.material = material
+    init(material: any RealityFoundation.Material) {
+        unwrappedValue = material
+    }
+    
+    var id: Int {
+        Int(bitPattern: Unmanaged.passUnretained(unwrappedValue.__resource).toOpaque())
     }
 }
