@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MyTextViewController : UIViewController
-
+@property (retain, nonatomic, readonly) UITextView *textView;
 @end
 
 NS_ASSUME_NONNULL_END
