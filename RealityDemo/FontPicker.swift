@@ -40,10 +40,10 @@ struct FontPicker: UIViewControllerRepresentable {
 
 extension FontPicker {
     @MainActor final class Coordinator: NSObject, UIFontPickerViewControllerDelegate {
-        var didCancelHandler: () -> Void
-        var didPickFontHandler: (UIFontDescriptor?) -> Void
+        fileprivate var didCancelHandler: () -> Void
+        fileprivate var didPickFontHandler: (UIFontDescriptor?) -> Void
         
-        init(
+        fileprivate init(
             didCancelHandler: @escaping () -> Void,
             didPickFontHandler: @escaping (UIFontDescriptor?) -> Void
         ) {

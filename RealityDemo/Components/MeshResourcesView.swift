@@ -81,6 +81,10 @@ struct MeshResourcesView: View {
                         )
                         .pop(popFontPicker)
                     }
+                case .attributedString:
+                    NavigationLink("Text Editor") {
+                        MyTextView(attributedText: $descriptor[_keyPath: keyPath.keyPath])
+                    }
                 }
             }
         }
@@ -110,6 +114,7 @@ fileprivate enum PrimitiveMesh: String, CaseIterable, Identifiable {
     case cone
     case cylinder
     case text
+    case extrudingText
     
     var id: String { rawValue }
     
@@ -137,6 +142,18 @@ fileprivate enum PrimitiveMesh: String, CaseIterable, Identifiable {
                 string: "Hello",
                 extrusionDepth: 0.25,
                 font: .systemFont(ofSize: 0.1),
+                containerFrame: .zero
+            )
+        case .extrudingText:
+            var attributes = AttributeContainer()
+            attributes.uiKit.strokeColor = .red
+            attributes.uiKit.strokeWidth = 3.0
+            attributes.uiKit.strikethroughStyle = .single
+            attributes.uiKit.strikethroughColor = .green
+            attributes.uiKit.font = .boldSystemFont(ofSize: 17.0)
+            
+            return ExtrudingText(
+                string: AttributedString("Hello", attributes: attributes),
                 containerFrame: .zero
             )
         }
@@ -191,6 +208,8 @@ extension PrimitiveMesh {
                 return lhs == rhs
             case let (lhs, rhs) as (Text, Text):
                 return lhs == rhs
+            case let (lhs, rhs) as (ExtrudingText, ExtrudingText):
+                return lhs == rhs
             default:
                 return false
             }
@@ -230,6 +249,9 @@ extension PrimitiveMesh.Descriptor {
             } else if let castedPath = path as? WritableKeyPath<PrimitiveMesh.Text, CGFloat> {
                 guard let text = self as? PrimitiveMesh.Text else { return .zero }
                 return Float(text[keyPath: castedPath])
+            } else if let castedPath = path as? WritableKeyPath<PrimitiveMesh.ExtrudingText, CGFloat> {
+                guard let extrudingText = self as? PrimitiveMesh.ExtrudingText else { return .zero }
+                return Float(extrudingText[keyPath: castedPath])
             } else {
                 fatalError()
             }
@@ -282,6 +304,11 @@ extension PrimitiveMesh.Descriptor {
                 text[keyPath: castedPath] = CGFloat(newValue)
                 self = text as! Self
                 return
+            } else if let castedPath = path as? WritableKeyPath<PrimitiveMesh.ExtrudingText, CGFloat> {
+                var extrudingText = self as! PrimitiveMesh.ExtrudingText
+                extrudingText[keyPath: castedPath] = CGFloat(newValue)
+                self = extrudingText as! Self
+                return
             }
             
             fatalError()
@@ -319,6 +346,38 @@ extension PrimitiveMesh.Descriptor {
             fatalError()
         }
     }
+    
+    subscript(_keyPath path: AnyKeyPath) -> AttributedString {
+        get {
+            if let anyDescriptor = self as? PrimitiveMesh.AnyDescriptor {
+                return anyDescriptor.unwrapValue[_keyPath: path]
+            }
+            
+            if let castedPath = path as? WritableKeyPath<PrimitiveMesh.ExtrudingText, AttributedString> {
+                guard let extrudingText = self as? PrimitiveMesh.ExtrudingText else { return "" }
+                return extrudingText[keyPath: castedPath]
+            }
+            
+            fatalError()
+        }
+        set {
+            if let anyDescriptor = self as? PrimitiveMesh.AnyDescriptor {
+                var value = anyDescriptor.unwrapValue
+                value[_keyPath: path] = newValue
+                self = PrimitiveMesh.AnyDescriptor(erasing: value) as! Self
+                return
+            }
+            
+            if let castedPath = path as? WritableKeyPath<PrimitiveMesh.ExtrudingText, AttributedString> {
+                var extrudingText = self as! PrimitiveMesh.ExtrudingText
+                extrudingText[keyPath: castedPath] = newValue
+                self = extrudingText as! Self
+                return
+            }
+            
+            fatalError()
+        }
+    }
 }
 
 extension PrimitiveMesh {
@@ -335,6 +394,7 @@ extension PrimitiveMesh {
             case float(ClosedRange<Float>)
             case string
             case font
+            case attributedString
         }
     }
 }
@@ -475,6 +535,38 @@ extension PrimitiveMesh {
             PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.size.width, title: "Width", dataType: .float(0.0...300.0)),
             PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.size.height, title: "Height", dataType: .float(0.0...300.0)),
             PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.font, title: "Font", dataType: .font)
+        ]
+    }
+}
+
+extension PrimitiveMesh {
+    struct ExtrudingText: Descriptor {
+        var string: AttributedString
+        var containerFrame: CGRect
+        // TODO: ShapeExtrusionOptions
+        
+        var meshResource: MeshResource {
+            var textOptions = MeshResource.GenerateTextOptions()
+            
+            if containerFrame == .null || containerFrame == .zero || containerFrame.size.width == .zero || containerFrame.height == .zero {
+                textOptions.containerFrame = nil
+            } else {
+                textOptions.containerFrame = containerFrame
+            }
+            
+            return try! MeshResource(
+                extruding: string,
+                textOptions: textOptions,
+                extrusionOptions: MeshResource.ShapeExtrusionOptions()
+            )
+        }
+        
+        let keyPaths: [PrimitiveMesh.KeyPathDescriptor] = [
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.string, title: "String", dataType: .attributedString),
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.origin.x, title: "Container Frame (X)", dataType: .float(0.0...300.0)),
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.origin.y, title: "Container Frame (Y)", dataType: .float(0.0...300.0)),
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.size.width, title: "Container Frame (Width)", dataType: .float(0.0...300.0)),
+            PrimitiveMesh.KeyPathDescriptor(keyPath: \Self.containerFrame.size.height, title: "Container Frame (Height)", dataType: .float(0.0...300.0)),
         ]
     }
 }

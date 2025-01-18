@@ -25,7 +25,14 @@ struct ModelComponentView: View {
             NavigationLink("MeshResource") {
                 MeshResourcesView { mesh in
                     component.mesh = mesh
+                    
+                    // ExtrudingText을 쓴다면
+//                    component.materials = []
                 }
+            }
+            
+            Section("Materials") {
+                
             }
             
             HStack {
@@ -34,7 +41,29 @@ struct ModelComponentView: View {
             }
         }
             .toolbar {
-                componentToolbarItems(entity: entity, component: component, realityService: realityService)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Remove Component", systemImage: "trash") {
+                        entity.components.remove(ModelComponent.self)
+                        realityService.popToEntitySettings()
+                    }
+                    .labelStyle(.iconOnly)
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done", systemImage: "checkmark") {
+                        entity.components.set(component)
+                        
+                        if var collisionComponent = entity.components[CollisionComponent.self] {
+                            let shape = ShapeResource.generateConvex(from: component.mesh)
+                            collisionComponent.shapes = [shape]
+                            entity.components.set(collisionComponent)
+                            print("Updated CollisionComponent!")
+                        }
+                        
+                        realityService.popToEntitySettings()
+                    }
+                    .labelStyle(.iconOnly)
+                }
             }
             .onChange(of: entity, initial: true) { oldValue, newValue in
                 guard currentEntity != newValue else { return }
@@ -60,5 +89,13 @@ extension ModelComponent {
                 SimpleMaterial(color: .init(white: .zero, alpha: 1.0), isMetallic: true)
             ]
         )
+    }
+}
+
+fileprivate struct MaterialWrapper: Identifiable {
+    let material: (any Material)
+    
+    init(material: any Material) {
+        self.material = material
     }
 }

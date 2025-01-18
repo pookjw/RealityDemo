@@ -34,15 +34,6 @@ struct ContentView: View {
             .offset(z: -proxy.size.depth * 0.25)
             .ornament(
                 visibility: .visible,
-                attachmentAnchor: .scene(.leadingFront),
-                contentAlignment: .trailing,
-                ornament: {
-                    MyTextView(attributedText: .init())
-                        .frame(width: 400.0, height: proxy.size.height)
-                        .glassBackgroundEffect()
-                })
-            .ornament(
-                visibility: .visible,
                 attachmentAnchor: .scene(.bottomFront),
                 contentAlignment: .top
             ) {

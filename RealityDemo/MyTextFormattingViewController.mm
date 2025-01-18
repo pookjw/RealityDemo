@@ -60,7 +60,10 @@ OBJC_EXPORT id objc_msgSendSuper2(void);
     return isa;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-designated-initializers"
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+#pragma clang diagnostic pop
     [NSUserDefaults.standardUserDefaults removeObjectForKey:@"UIFontPickerRecentFamilies"];
     
     objc_super superInfo = { self, [self class] };
