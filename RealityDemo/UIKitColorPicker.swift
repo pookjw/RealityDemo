@@ -189,7 +189,7 @@ extension UIColorPickerViewController {
             return casted(self, cmd) as! [UIColor]
         }
         set {
-            let cmd = Selector(("_setUserInterfaceStyleForGrid:"))
+            let cmd = Selector(("_setSuggestedColors:"))
             let method = class_getInstanceMethod(Self.self, cmd)!
             let imp = method_getImplementation(method)
             let casted = unsafeBitCast(imp, to: (@convention(c) (UIColorPickerViewController, Selector, NSArray) -> Void).self)
