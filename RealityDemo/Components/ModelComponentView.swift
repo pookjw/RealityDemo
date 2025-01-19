@@ -12,6 +12,7 @@ struct ModelComponentView: View {
     @Environment(RealityService.self) private var realityService
     
     @State private var component = ModelComponent.defaultComponent
+    @State private var materialWrappers: [MaterialWrapper] = []
     
     @State private var currentEntity: Entity?
     private let entity: Entity
@@ -29,72 +30,74 @@ struct ModelComponentView: View {
             }
             
             Section("Materials") {
-                ForEach(component.materials.map({ AnyMaterial(material: $0) })) { material in
+                ForEach(materialWrappers) { wrapper in
+                    let material = wrapper.material
+                    
                     NavigationLink(
-                        _mangledTypeName(type(of: material.unwrappedValue)) ?? _typeName(type(of: material.unwrappedValue), qualified: true)
+                        _mangledTypeName(type(of: material)) ?? _typeName(type(of: material), qualified: true)
                     ) {
-                        if let simpleMaterial = material.unwrappedValue as? SimpleMaterial {
+                        if let simpleMaterial = material as? SimpleMaterial {
                             SimpleMaterialView(
                                 material: Binding<SimpleMaterial>(
                                     get: {
-                                        simpleMaterial
+                                        currentMaterial(for: wrapper)
                                     },
                                     set: { newValue in
-                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                        update(oldWrapper: wrapper, newMaterial: newValue)
                                     }
                                 )
                             )
-                        } else if let occlusionMaterial = material.unwrappedValue as? OcclusionMaterial {
+                        } else if let occlusionMaterial = material as? OcclusionMaterial {
                             OcclusionMaterialView(
                                 material: Binding<OcclusionMaterial>(
                                     get: {
-                                        occlusionMaterial
+                                        currentMaterial(for: wrapper)
                                     },
                                     set: { newValue in
-                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                        update(oldWrapper: wrapper, newMaterial: newValue)
                                     }
                                 )
                             )
-                        } else if let skyboxMaterial = material.unwrappedValue as? __SkyboxMaterial {
+                        } else if let skyboxMaterial = material as? __SkyboxMaterial {
                             SkyboxMaterialView(
                                 material: Binding<__SkyboxMaterial>(
                                     get: {
-                                        skyboxMaterial
+                                        currentMaterial(for: wrapper)
                                     },
                                     set: { newValue in
-                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                        update(oldWrapper: wrapper, newMaterial: newValue)
                                     }
                                 )
                             )
-                        } else if let unlitMaterial = material.unwrappedValue as? UnlitMaterial {
+                        } else if let unlitMaterial = material as? UnlitMaterial {
                             UnlitMaterialView(
                                 material: Binding<UnlitMaterial>(
                                     get: {
-                                        unlitMaterial
+                                        currentMaterial(for: wrapper)
                                     },
                                     set: { newValue in
-                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                        update(oldWrapper: wrapper, newMaterial: newValue)
                                     }
                                 )
                             )
-                        } else if let physicallyBasedMaterial = material.unwrappedValue as? PhysicallyBasedMaterial {
+                        } else if let physicallyBasedMaterial = material as? PhysicallyBasedMaterial {
                             PhysicallyBasedMaterialView(
                                 material: Binding<PhysicallyBasedMaterial>(
                                     get: {
-                                        physicallyBasedMaterial
+                                        currentMaterial(for: wrapper)
                                     },
                                     set: { newValue in
-                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                        update(oldWrapper: wrapper, newMaterial: newValue)
                                     }
                                 )
                             )
                         } else {
-                            Text("Unknown Material Type: \(_typeName(type(of: material.unwrappedValue), qualified: true))")
+                            Text("Unknown Material Type: \(_typeName(type(of: material), qualified: true))")
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button("Remove", systemImage: "trash", role: .destructive) {
-                            remove(material: material.unwrappedValue)
+                            remove(wrapper: wrapper)
                         }
                     }
                 }
@@ -125,6 +128,7 @@ struct ModelComponentView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Done", systemImage: "checkmark") {
+                    component.materials = materialWrappers.map { $0.material }
                     entity.components.set(component)
                     
                     if var collisionComponent = entity.components[CollisionComponent.self] {
@@ -151,45 +155,62 @@ struct ModelComponentView: View {
             }
             
             self.component = component
+            
+            let materialWrappers: [MaterialWrapper] = .init(unsafeUninitializedCapacity: component.materials.count) { pointer, count in
+                for material in component.materials {
+                    let wrapper = MaterialWrapper(id: UUID(), material: material)
+                    pointer.baseAddress!.advanced(by: count).initialize(to: wrapper)
+                    count += 1
+                }
+            }
+            
+            self.materialWrappers = materialWrappers
         }
     }
     
-    private func update(
-        oldMaterial: any RealityFoundation.Material,
-        newMaterial: any RealityFoundation.Material
-    ) {
-        var materials: [any RealityFoundation.Material] = component.materials
+    private func update(oldWrapper: MaterialWrapper, newMaterial: any RealityFoundation.Material) {
+        var materialWrappers = materialWrappers
         
-        guard let firstIndex = materials
-            .firstIndex(
-                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(oldMaterial.__resource).toOpaque() }
-            )
-        else {
-            print("No Material found")
+        guard let firstIndex = materialWrappers.firstIndex(
+            where: { $0.id == oldWrapper.id }
+        ) else {
+            assertionFailure()
             return
         }
         
-        materials.remove(at: firstIndex)
-        materials.insert(newMaterial, at: firstIndex)
+        materialWrappers.remove(at: firstIndex)
         
-        component.materials = materials
+        let newWrapper = MaterialWrapper(id: oldWrapper.id, material: newMaterial)
+        materialWrappers.insert(newWrapper, at: firstIndex)
+        
+        self.materialWrappers = materialWrappers
     }
     
-    private func remove(material: any RealityFoundation.Material) {
-        var materials: [any RealityFoundation.Material] = component.materials
+    private func remove(wrapper: MaterialWrapper) {
+        var materialWrappers = materialWrappers
         
-        guard let firstIndex = materials
-            .firstIndex(
-                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() }
-            )
-        else {
-            assertionFailure("No Material found")
+        guard let firstIndex = materialWrappers.firstIndex(
+            where: { $0.id == wrapper.id }
+        ) else {
+            assertionFailure()
             return
         }
         
-        materials.remove(at: firstIndex)
+        materialWrappers.remove(at: firstIndex)
         
-        component.materials = materials
+        self.materialWrappers = materialWrappers
+    }
+    
+    private func currentMaterial<T: RealityFoundation.Material>(for wrapper: MaterialWrapper) -> T {
+        let materialWrappers = materialWrappers
+        
+        guard let firstIndex = materialWrappers.firstIndex(
+            where: { $0.id == wrapper.id }
+        ) else {
+            fatalError()
+        }
+        
+        return materialWrappers[firstIndex].material as! T
     }
 }
 
@@ -204,14 +225,7 @@ extension ModelComponent {
     }
 }
 
-fileprivate struct AnyMaterial: Identifiable {
-    let unwrappedValue: (any RealityFoundation.Material)
-    
-    init(material: any RealityFoundation.Material) {
-        unwrappedValue = material
-    }
-    
-    var id: Int {
-        Int(bitPattern: Unmanaged.passUnretained(unwrappedValue.__resource).toOpaque())
-    }
+fileprivate struct MaterialWrapper: Identifiable {
+    let id: UUID
+    let material: any RealityFoundation.Material
 }
