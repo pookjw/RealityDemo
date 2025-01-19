@@ -70,7 +70,7 @@ struct CollisionComponentView: View {
             
             Text("shapes (TODO)")
         }
-        .navigationTitle("CollisionComponent")
+        .navigationTitle(_typeName(CollisionComponent.self))
         .toolbar {
             componentToolbarItems(entity: entity, component: component, realityService: realityService)
         }

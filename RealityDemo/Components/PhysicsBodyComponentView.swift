@@ -214,7 +214,7 @@ struct PhysicsBodyComponentView: View {
                 .labelStyle(.iconOnly)
             }
         }
-        .navigationTitle("PhysicsBodyComponent")
+        .navigationTitle(_typeName(PhysicsBodyComponent.self))
         .onChange(of: entity, initial: true) { oldValue, newValue in
             guard currentEntity != newValue else { return }
             currentEntity = newValue

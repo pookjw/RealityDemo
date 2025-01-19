@@ -19,11 +19,11 @@ struct AddComponentView: View {
     
     var body: some View {
         Form { 
-            NavigationLink("PhysicsBodyComponent", value: ContentStack.physicsBodyComponent(entity: entity))
+            NavigationLink(_mangledTypeName(PhysicsBodyComponent.self)!, value: ContentStack.physicsBodyComponent(entity: entity))
             
-            NavigationLink("CollisionComponent", value: ContentStack.collisionComponent(entity: entity))
+            NavigationLink(_mangledTypeName(CollisionComponent.self)!, value: ContentStack.collisionComponent(entity: entity))
             
-            NavigationLink("ModelComponent", value: ContentStack.modelComponent(entity: entity))
+            NavigationLink(_mangledTypeName(ModelComponent.self)!, value: ContentStack.modelComponent(entity: entity))
         }
         .navigationTitle("Add Component")
     }

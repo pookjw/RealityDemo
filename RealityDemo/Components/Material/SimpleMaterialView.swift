@@ -9,60 +9,73 @@ import SwiftUI
 import RealityFoundation
 
 struct SimpleMaterialView: View {
-    @State private var simpleMaterial: SimpleMaterial
-    private let didChangeHandler: ((SimpleMaterial) -> Void)?
-    private let completionHandler: ((SimpleMaterial) -> Void)?
+    @Binding private var material: SimpleMaterial
+    private let completionHandler: (() -> Void)?
     @State private var pop = false
     
     init(
-        simpleMaterial: SimpleMaterial = SimpleMaterial(
-            color: SimpleMaterial.Color(white: .zero, alpha: 1.0),
-            isMetallic: true
-        ),
-        didChangeHandler: ((SimpleMaterial) -> Void)? = nil,
-        completionHandler: ((SimpleMaterial) -> Void)? = nil
+        material: Binding<SimpleMaterial>,
+        completionHandler: (() -> Void)? = nil
     ) {
-        _simpleMaterial = State<SimpleMaterial>(initialValue: simpleMaterial)
-        self.didChangeHandler = didChangeHandler
+        _material = material
         self.completionHandler = completionHandler
     }
     
     var body: some View {
         Form {
-            NavigationLink {
-                UIKitColorPicker(
-                    selectedColor: $simpleMaterial.color.tint,
-                    continuously: false
-                )
-            } label: {
-                HStack {
-                    Text("Tint Color")
-                    Spacer()
-                    Circle()
-                        .fill(Color(uiColor: simpleMaterial.color.tint))
-                        .frame(width: 25.0, height: 25.0)
+            Section {
+                NavigationLink {
+                    UIKitColorPicker(
+                        selectedColor: $material.color.tint,
+                        continuously: false
+                    )
+                } label: {
+                    HStack {
+                        Text("Tint Color")
+                        Spacer()
+                        Circle()
+                            .fill(Color(uiColor: material.color.tint))
+                            .frame(width: 25.0, height: 25.0)
+                    }
+                }
+                
+                NavigationLink {
+                    UIKitColorPicker(
+                        selectedColor: $material[\SimpleMaterial.__emissive],
+                        continuously: false
+                    )
+                } label: {
+                    HStack {
+                        Text("Emissive")
+                        Spacer()
+                        Circle()
+                            .fill(Color(uiColor: material[\SimpleMaterial.__emissive]))
+                            .frame(width: 25.0, height: 25.0)
+                    }
                 }
             }
             
-            HStack {
-                Text("Metallic")
-                Slider(value: $simpleMaterial[\.metallic], in: 0.0...1.0)
-            }
-            
-            HStack {
-                Text("Roughness")
-                Slider(value: $simpleMaterial[\.roughness], in: 0.0...1.0)
+            Section {
+                HStack {
+                    Text("Metallic")
+                    Slider(value: $material[\.metallic], in: 0.0...1.0)
+                }
+                
+                HStack {
+                    Text("Roughness")
+                    Slider(value: $material[\.roughness], in: 0.0...1.0)
+                }
             }
             
             Section("Face Culling") {
                 ForEach(SimpleMaterial.FaceCulling.allCases) { faceCulling in
                     Button {
-                        simpleMaterial.faceCulling = faceCulling
+                        material.faceCulling = faceCulling
                     } label: {
                         Label {
                             Text(faceCulling.title)
                         } icon: {
-                            if simpleMaterial.faceCulling == faceCulling {
+                            if material.faceCulling == faceCulling {
                                 Image(systemName: "checkmark")
                             }
                         }
@@ -73,12 +86,12 @@ struct SimpleMaterialView: View {
             Section("Triangle Fill Mode") {
                 ForEach(SimpleMaterial.TriangleFillMode.allCases) { triangleFillMode in
                     Button {
-                        simpleMaterial.triangleFillMode = triangleFillMode
+                        material.triangleFillMode = triangleFillMode
                     } label: {
                         Label {
                             Text(triangleFillMode.title)
                         } icon: {
-                            if simpleMaterial.triangleFillMode == triangleFillMode {
+                            if material.triangleFillMode == triangleFillMode {
                                 Image(systemName: "checkmark")
                             }
                         }
@@ -87,20 +100,23 @@ struct SimpleMaterialView: View {
             }
             
             Section {
-                Toggle("Reads Depth", isOn: $simpleMaterial.readsDepth)
-                Toggle("Writes Depth", isOn: $simpleMaterial.writesDepth)
+                Toggle("Reads Depth", isOn: $material.readsDepth)
+                Toggle("Writes Depth", isOn: $material.writesDepth)
+                Toggle("Uses Transparency", isOn: $material.__usesTransparency)
             }
             
-            Image("material")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            Section {
+                Image("material")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
         }
-        .navigationTitle("SimpleMaterial")
+        .navigationTitle(_typeName(SimpleMaterial.self))
         .toolbar {
             if let completionHandler {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done", systemImage: "checkmark") {
-                        completionHandler(simpleMaterial)
+                        completionHandler()
                         pop = true
                     }
                 }
@@ -110,40 +126,10 @@ struct SimpleMaterialView: View {
         .onDisappear {
             pop = false
         }
-        .onChange(of: simpleMaterial.color.tint, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.metallic, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.roughness, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.faceCulling, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.triangleFillMode, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.readsDepth, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
-        .onChange(of: simpleMaterial.writesDepth, initial: false) { oldValue, newValue in
-            didChangeHandler?(simpleMaterial)
-        }
     }
 }
 
 extension SimpleMaterial {
-    fileprivate subscript(_keyPath: WritableKeyPath<Self, UIColor>) -> UIColor {
-        get {
-            self[keyPath: _keyPath]
-        }
-        set {
-            self[keyPath: _keyPath] = newValue
-        }
-    }
-    
     fileprivate subscript(_keyPath: WritableKeyPath<Self, MaterialScalarParameter>) -> Float {
         get {
             let paramter = self[keyPath: _keyPath]
@@ -158,6 +144,23 @@ extension SimpleMaterial {
         }
         set {
             self[keyPath: _keyPath] = .float(newValue)
+        }
+    }
+    
+    fileprivate subscript(_keyPath: WritableKeyPath<Self, __MaterialColorParameter>) -> UIColor {
+        get {
+            let parameter = self[keyPath: _keyPath]
+            switch parameter {
+            case .color(let cgColor):
+                return UIColor(cgColor: cgColor)
+            case .texture(_):
+                fatalError()
+            @unknown default:
+                fatalError()
+            }
+        }
+        set {
+            self[keyPath: _keyPath] = .color(newValue.cgColor)
         }
     }
 }

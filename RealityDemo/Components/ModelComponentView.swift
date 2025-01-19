@@ -30,16 +30,66 @@ struct ModelComponentView: View {
             
             Section("Materials") {
                 ForEach(component.materials.map({ AnyMaterial(material: $0) })) { material in
-                    NavigationLink(String(String(describing: type(of: material.unwrappedValue)))) {
+                    NavigationLink(
+                        _mangledTypeName(type(of: material.unwrappedValue)) ?? _typeName(type(of: material.unwrappedValue), qualified: true)
+                    ) {
                         if let simpleMaterial = material.unwrappedValue as? SimpleMaterial {
                             SimpleMaterialView(
-                                simpleMaterial: simpleMaterial,
-                                didChangeHandler: { result in
-                                    update(material: result)
-                                }
+                                material: Binding<SimpleMaterial>(
+                                    get: {
+                                        simpleMaterial
+                                    },
+                                    set: { newValue in
+                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                    }
+                                )
+                            )
+                        } else if let occlusionMaterial = material.unwrappedValue as? OcclusionMaterial {
+                            OcclusionMaterialView(
+                                material: Binding<OcclusionMaterial>(
+                                    get: {
+                                        occlusionMaterial
+                                    },
+                                    set: { newValue in
+                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                    }
+                                )
+                            )
+                        } else if let skyboxMaterial = material.unwrappedValue as? __SkyboxMaterial {
+                            SkyboxMaterialView(
+                                material: Binding<__SkyboxMaterial>(
+                                    get: {
+                                        skyboxMaterial
+                                    },
+                                    set: { newValue in
+                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                    }
+                                )
+                            )
+                        } else if let unlitMaterial = material.unwrappedValue as? UnlitMaterial {
+                            UnlitMaterialView(
+                                material: Binding<UnlitMaterial>(
+                                    get: {
+                                        unlitMaterial
+                                    },
+                                    set: { newValue in
+                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                    }
+                                )
+                            )
+                        } else if let physicallyBasedMaterial = material.unwrappedValue as? PhysicallyBasedMaterial {
+                            PhysicallyBasedMaterialView(
+                                material: Binding<PhysicallyBasedMaterial>(
+                                    get: {
+                                        physicallyBasedMaterial
+                                    },
+                                    set: { newValue in
+                                        update(oldMaterial: material.unwrappedValue, newMaterial: newValue)
+                                    }
+                                )
                             )
                         } else {
-                            Text("Unknown Material Type")
+                            Text("Unknown Material Type: \(_typeName(type(of: material.unwrappedValue), qualified: true))")
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -55,67 +105,72 @@ struct ModelComponentView: View {
                 Slider(value: $component.boundsMargin, in: -1.0...1.0)
             }
         }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Remove Component", systemImage: "trash", role: .destructive) {
-                        entity.components.remove(ModelComponent.self)
-                        realityService.popToEntitySettings()
-                    }
-                    .labelStyle(.iconOnly)
+        .navigationTitle(_typeName(ModelComponent.self))
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Remove Component", systemImage: "trash", role: .destructive) {
+                    entity.components.remove(ModelComponent.self)
+                    realityService.popToEntitySettings()
                 }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        AddMaterialView(component: $component)
-                    } label: {
-                        Label("Add Material", systemImage: "light.overhead.left.fill")
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done", systemImage: "checkmark") {
-                        entity.components.set(component)
-                        
-                        if var collisionComponent = entity.components[CollisionComponent.self] {
-                            let shape = ShapeResource.generateConvex(from: component.mesh)
-                            collisionComponent.shapes = [shape]
-                            entity.components.set(collisionComponent)
-                            print("Updated CollisionComponent!")
-                        }
-                        
-                        realityService.popToEntitySettings()
-                    }
-                    .labelStyle(.iconOnly)
+                .labelStyle(.iconOnly)
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    AddMaterialView(component: $component)
+                } label: {
+                    Label("Add Material", systemImage: "light.overhead.left.fill")
                 }
             }
-            .onChange(of: entity, initial: true) { oldValue, newValue in
-                guard currentEntity != newValue else { return }
-                currentEntity = newValue
-                
-                let component: ModelComponent
-                if let _component = newValue.components[ModelComponent.self] {
-                    component = _component
-                } else {
-                    component = .defaultComponent
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done", systemImage: "checkmark") {
+                    entity.components.set(component)
+                    
+                    if var collisionComponent = entity.components[CollisionComponent.self] {
+                        let shape = ShapeResource.generateConvex(from: component.mesh)
+                        collisionComponent.shapes = [shape]
+                        entity.components.set(collisionComponent)
+                        print("Updated CollisionComponent!")
+                    }
+                    
+                    realityService.popToEntitySettings()
                 }
-                
-                self.component = component
+                .labelStyle(.iconOnly)
             }
+        }
+        .onChange(of: entity, initial: true) { oldValue, newValue in
+            guard currentEntity != newValue else { return }
+            currentEntity = newValue
+            
+            let component: ModelComponent
+            if let _component = newValue.components[ModelComponent.self] {
+                component = _component
+            } else {
+                component = .defaultComponent
+            }
+            
+            self.component = component
+        }
     }
     
-    private func update(material: any RealityFoundation.Material) {
+    private func update(
+        oldMaterial: any RealityFoundation.Material,
+        newMaterial: any RealityFoundation.Material
+    ) {
         var materials: [any RealityFoundation.Material] = component.materials
         
         guard let firstIndex = materials
             .firstIndex(
-                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() })
+                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(oldMaterial.__resource).toOpaque() }
+            )
         else {
             print("No Material found")
             return
         }
         
         materials.remove(at: firstIndex)
-        materials.insert(material, at: firstIndex)
+        materials.insert(newMaterial, at: firstIndex)
         
         component.materials = materials
     }
@@ -125,9 +180,10 @@ struct ModelComponentView: View {
         
         guard let firstIndex = materials
             .firstIndex(
-                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() })
+                where: { Unmanaged.passUnretained($0.__resource).toOpaque() == Unmanaged.passUnretained(material.__resource).toOpaque() }
+            )
         else {
-            print("No Material found")
+            assertionFailure("No Material found")
             return
         }
         

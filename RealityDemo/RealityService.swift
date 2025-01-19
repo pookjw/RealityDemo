@@ -115,7 +115,9 @@ extension RealityService {
         entity.model = ModelComponent(
             mesh: MeshResource.generateBox(size: .init(x: 0.1, y: 0.1, z: 0.1)),
             materials: [
-                SimpleMaterial(color: .init(white: .zero, alpha: 1.0), isMetallic: true)
+//                SimpleMaterial(color: .init(white: .zero, alpha: 1.0), isMetallic: true)
+//                UnlitMaterial(color: .red)
+                PhysicallyBasedMaterial()
             ]
         )
         
@@ -197,31 +199,46 @@ extension RealityService {
             
             let boxShape = ShapeResource.generateBox(size: size)
             
-//            let collisionComponent = CollisionComponent(
-//                shapes: [boxShape],
-//                isStatic: true, // collider이 고정인지 아닌지 - 고정이라면 true로 하면 성능에 좋아질 것
-//                filter: .sensor
-//            )
-            let collisionComponent = CollisionComponent(
-                shapes: [boxShape],
-                mode: .colliding,
-                filter: .init(group: .default, mask: .default)
-            )
-            
-            var physicsBodyComponent = PhysicsBodyComponent(
-                shapes: [boxShape],
-                mass: 1.0,
-                material: nil,
-                mode: .static // 벽은 움직이지 않는다.
-            )
-            physicsBodyComponent.isAffectedByGravity = false
-            
             let faceEntity: ModelEntity
+            var collisionComponent: CollisionComponent
+            var physicsBodyComponent: PhysicsBodyComponent
+            var modelComponent: ModelComponent
+            
             if let _faceEntity = boxEntity.findEntity(named: face.rawValue) {
                 faceEntity = _faceEntity as! ModelEntity
+                
+                collisionComponent = faceEntity.components[CollisionComponent.self]!
+                collisionComponent.shapes = [boxShape]
+                
+                physicsBodyComponent = faceEntity.components[PhysicsBodyComponent.self]!
+                physicsBodyComponent.massProperties = PhysicsMassProperties(shape: boxShape, mass: physicsBodyComponent.massProperties.mass)
+                
+                modelComponent = faceEntity.components[ModelComponent.self]!
+                modelComponent.mesh = MeshResource.generateBox(size: size)
             } else {
                 faceEntity = ModelEntity()
                 faceEntity.name = face.rawValue
+                
+                collisionComponent = CollisionComponent(
+                    shapes: [boxShape],
+                    mode: .colliding,
+                    filter: .init(group: .default, mask: .default)
+                )
+                
+                physicsBodyComponent = PhysicsBodyComponent(
+                    shapes: [boxShape],
+                    mass: 1.0,
+                    material: nil,
+                    mode: .static // 벽은 움직이지 않는다.
+                )
+                physicsBodyComponent.isAffectedByGravity = false
+                
+                modelComponent = ModelComponent(
+                    mesh: MeshResource.generateBox(size: size),
+                    materials: [
+                        SimpleMaterial(color: .init(white: 1.0, alpha: 0.1), isMetallic: true)
+                    ]
+                )
                 
                 boxEntity.addChild(faceEntity)
             }
@@ -230,12 +247,8 @@ extension RealityService {
             faceEntity.components.set(physicsBodyComponent)
             
             faceEntity.position = position
-            faceEntity.model = ModelComponent(
-                mesh: MeshResource.generateBox(size: size),
-                materials: [
-                    SimpleMaterial(color: .init(white: 1.0, alpha: 0.1), isMetallic: true)
-                ]
-            )
+//            faceEntity.model = modelComponent
+            faceEntity.components.set(modelComponent)
         }
     }
 }

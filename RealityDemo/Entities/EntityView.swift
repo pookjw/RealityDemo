@@ -74,8 +74,8 @@ struct EntityView: View {
 
 extension Component {
     fileprivate var componentName: String {
-        Self.__typeName
-//        String(describing: type(of: self))
+//        Self.__typeName
+        _mangledTypeName(Self.self)!
     }
 }
 

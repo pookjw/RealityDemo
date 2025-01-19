@@ -9,36 +9,33 @@ import SwiftUI
 import RealityFoundation
 
 struct OcclusionMaterialView: View {
-    @State private var occlusionMaterial: OcclusionMaterial
-    private let didChangeHandler: ((OcclusionMaterial) -> Void)?
-    private let completionHandler: ((OcclusionMaterial) -> Void)?
+    @Binding private var material: OcclusionMaterial
+    private let completionHandler: (() -> Void)?
     @State private var pop = false
     
     init(
-        occlusionMaterial: OcclusionMaterial = OcclusionMaterial(),
-        didChangeHandler: ((OcclusionMaterial) -> Void)? = nil,
-        completionHandler: ((OcclusionMaterial) -> Void)? = nil
+        material: Binding<OcclusionMaterial>,
+        completionHandler: (() -> Void)? = nil
     ) {
-        _occlusionMaterial = State<OcclusionMaterial>(initialValue: occlusionMaterial)
-        self.didChangeHandler = didChangeHandler
+        _material = material
         self.completionHandler = completionHandler
     }
     
     var body: some View {
         Form {
             Section {
-                Toggle("Reads Depth", isOn: $occlusionMaterial.readsDepth)
+                Toggle("Reads Depth", isOn: $material.readsDepth)
             }
             
             Section("Face Culling") {
                 ForEach(SimpleMaterial.FaceCulling.allCases) { faceCulling in
                     Button {
-                        occlusionMaterial.faceCulling = faceCulling
+                        material.faceCulling = faceCulling
                     } label: {
                         Label {
                             Text(faceCulling.title)
                         } icon: {
-                            if occlusionMaterial.faceCulling == faceCulling {
+                            if material.faceCulling == faceCulling {
                                 Image(systemName: "checkmark")
                             }
                         }
@@ -54,11 +51,12 @@ struct OcclusionMaterialView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         }
+        .navigationTitle(_typeName(OcclusionMaterial.self))
         .toolbar {
             if let completionHandler {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done", systemImage: "checkmark") {
-                        completionHandler(occlusionMaterial)
+                        completionHandler()
                         pop = true
                     }
                 }
