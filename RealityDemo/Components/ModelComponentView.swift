@@ -31,66 +31,22 @@ struct ModelComponentView: View {
             
             Section("Materials") {
                 ForEach(materialWrappers) { wrapper in
+                    @Bindable var wrapper = wrapper
                     let material = wrapper.material
                     
                     NavigationLink(
                         _mangledTypeName(type(of: material)) ?? _typeName(type(of: material), qualified: true)
                     ) {
-                        if let simpleMaterial = material as? SimpleMaterial {
-                            SimpleMaterialView(
-                                material: Binding<SimpleMaterial>(
-                                    get: {
-                                        simpleMaterial
-                                    },
-                                    set: { newValue in
-                                        update(oldWrapper: wrapper, newMaterial: newValue)
-                                    }
-                                )
-                            )
-                        } else if let occlusionMaterial = material as? OcclusionMaterial {
-                            OcclusionMaterialView(
-                                material: Binding<OcclusionMaterial>(
-                                    get: {
-                                        occlusionMaterial
-                                    },
-                                    set: { newValue in
-                                        update(oldWrapper: wrapper, newMaterial: newValue)
-                                    }
-                                )
-                            )
-                        } else if let skyboxMaterial = material as? __SkyboxMaterial {
-                            SkyboxMaterialView(
-                                material: Binding<__SkyboxMaterial>(
-                                    get: {
-                                        skyboxMaterial
-                                    },
-                                    set: { newValue in
-                                        update(oldWrapper: wrapper, newMaterial: newValue)
-                                    }
-                                )
-                            )
-                        } else if let unlitMaterial = material as? UnlitMaterial {
-                            UnlitMaterialView(
-                                material: Binding<UnlitMaterial>(
-                                    get: {
-                                        unlitMaterial
-                                    },
-                                    set: { newValue in
-                                        update(oldWrapper: wrapper, newMaterial: newValue)
-                                    }
-                                )
-                            )
-                        } else if let physicallyBasedMaterial = material as? PhysicallyBasedMaterial {
-                            PhysicallyBasedMaterialView(
-                                material: Binding<PhysicallyBasedMaterial>(
-                                    get: {
-                                        physicallyBasedMaterial
-                                    },
-                                    set: { newValue in
-                                        update(oldWrapper: wrapper, newMaterial: newValue)
-                                    }
-                                )
-                            )
+                        if material is SimpleMaterial {
+                            SimpleMaterialView(material: $wrapper[\MaterialWrapper.material])
+                        } else if material is OcclusionMaterial {
+                            OcclusionMaterialView(material: $wrapper[\MaterialWrapper.material])
+                        } else if material is __SkyboxMaterial {
+                            SkyboxMaterialView(material: $wrapper[\MaterialWrapper.material])
+                        } else if material is UnlitMaterial {
+                            UnlitMaterialView(material: $wrapper[\MaterialWrapper.material])
+                        } else if material is PhysicallyBasedMaterial {
+                            PhysicallyBasedMaterialView(material: $wrapper[\MaterialWrapper.material])
                         } else {
                             Text("Unknown Material Type: \(_typeName(type(of: material), qualified: true))")
                         }
@@ -170,24 +126,6 @@ struct ModelComponentView: View {
         }
     }
     
-    private func update(oldWrapper: MaterialWrapper, newMaterial: any RealityFoundation.Material) {
-        var materialWrappers = materialWrappers
-        
-        guard let firstIndex = materialWrappers.firstIndex(
-            where: { $0.id == oldWrapper.id }
-        ) else {
-            assertionFailure()
-            return
-        }
-        
-        materialWrappers.remove(at: firstIndex)
-        
-        let newWrapper = MaterialWrapper(id: oldWrapper.id, material: newMaterial)
-        materialWrappers.insert(newWrapper, at: firstIndex)
-        
-        self.materialWrappers = materialWrappers
-    }
-    
     private func remove(wrapper: MaterialWrapper) {
         var materialWrappers = materialWrappers
         
@@ -215,7 +153,22 @@ extension ModelComponent {
     }
 }
 
-fileprivate struct MaterialWrapper: Identifiable {
+@Observable
+fileprivate final class MaterialWrapper: Identifiable {
     let id: UUID
-    let material: any RealityFoundation.Material
+    var material: any RealityFoundation.Material
+    
+    init(id: UUID = UUID(), material: any RealityFoundation.Material) {
+        self.id = id
+        self.material = material
+    }
+    
+    subscript<T: RealityFoundation.Material>(_keyPath: WritableKeyPath<MaterialWrapper, any RealityFoundation.Material>) -> T {
+        get {
+            self[keyPath: _keyPath] as! T
+        }
+        set {
+            self.material = newValue
+        }
+    }
 }
