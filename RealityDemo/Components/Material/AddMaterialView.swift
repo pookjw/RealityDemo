@@ -9,11 +9,11 @@ import SwiftUI
 import RealityFoundation
 
 struct AddMaterialView: View {
-    @Binding private var component: ModelComponent
+    private let completionHandler: (any RealityFoundation.Material) -> Void
     @State private var pop = false
     
-    init(component: Binding<ModelComponent>) {
-        _component = component
+    init(completionHandler: @escaping (any RealityFoundation.Material) -> Void) {
+        self.completionHandler = completionHandler
     }
     
     var body: some View {
@@ -21,7 +21,7 @@ struct AddMaterialView: View {
             NavigationLink(_mangledTypeName(SimpleMaterial.self)!) {
                 MaterialEntryView(material: SimpleMaterial()) { binding in
                     SimpleMaterialView(material: binding) {
-                        component.materials.append(binding.wrappedValue)
+                        completionHandler(binding.wrappedValue)
                         pop = true
                     }
                 }
@@ -30,7 +30,7 @@ struct AddMaterialView: View {
             NavigationLink(_mangledTypeName(OcclusionMaterial.self)!) {
                 MaterialEntryView(material: OcclusionMaterial()) { binding in
                     OcclusionMaterialView(material: binding) {
-                        component.materials.append(binding.wrappedValue)
+                        completionHandler(binding.wrappedValue)
                         pop = true
                     }
                 }
@@ -39,7 +39,7 @@ struct AddMaterialView: View {
             NavigationLink(_mangledTypeName(__SkyboxMaterial.self)!) {
                 MaterialEntryView(material: __SkyboxMaterial()) { binding in
                     SkyboxMaterialView(material: binding) {
-                        component.materials.append(binding.wrappedValue)
+                        completionHandler(binding.wrappedValue)
                         pop = true
                     }
                 }
@@ -48,7 +48,7 @@ struct AddMaterialView: View {
             NavigationLink(_mangledTypeName(UnlitMaterial.self)!) {
                 MaterialEntryView(material: UnlitMaterial()) { binding in
                     UnlitMaterialView(material: binding) {
-                        component.materials.append(binding.wrappedValue)
+                        completionHandler(binding.wrappedValue)
                         pop = true
                     }
                 }
@@ -57,7 +57,7 @@ struct AddMaterialView: View {
             NavigationLink(_mangledTypeName(PhysicallyBasedMaterial.self)!) {
                 MaterialEntryView(material: PhysicallyBasedMaterial()) { binding in
                     PhysicallyBasedMaterialView(material: binding) {
-                        component.materials.append(binding.wrappedValue)
+                        completionHandler(binding.wrappedValue)
                         pop = true
                     }
                 }

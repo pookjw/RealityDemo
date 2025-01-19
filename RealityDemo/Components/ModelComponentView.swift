@@ -40,7 +40,7 @@ struct ModelComponentView: View {
                             SimpleMaterialView(
                                 material: Binding<SimpleMaterial>(
                                     get: {
-                                        currentMaterial(for: wrapper)
+                                        simpleMaterial
                                     },
                                     set: { newValue in
                                         update(oldWrapper: wrapper, newMaterial: newValue)
@@ -51,7 +51,7 @@ struct ModelComponentView: View {
                             OcclusionMaterialView(
                                 material: Binding<OcclusionMaterial>(
                                     get: {
-                                        currentMaterial(for: wrapper)
+                                        occlusionMaterial
                                     },
                                     set: { newValue in
                                         update(oldWrapper: wrapper, newMaterial: newValue)
@@ -62,7 +62,7 @@ struct ModelComponentView: View {
                             SkyboxMaterialView(
                                 material: Binding<__SkyboxMaterial>(
                                     get: {
-                                        currentMaterial(for: wrapper)
+                                        skyboxMaterial
                                     },
                                     set: { newValue in
                                         update(oldWrapper: wrapper, newMaterial: newValue)
@@ -73,7 +73,7 @@ struct ModelComponentView: View {
                             UnlitMaterialView(
                                 material: Binding<UnlitMaterial>(
                                     get: {
-                                        currentMaterial(for: wrapper)
+                                        unlitMaterial
                                     },
                                     set: { newValue in
                                         update(oldWrapper: wrapper, newMaterial: newValue)
@@ -84,7 +84,7 @@ struct ModelComponentView: View {
                             PhysicallyBasedMaterialView(
                                 material: Binding<PhysicallyBasedMaterial>(
                                     get: {
-                                        currentMaterial(for: wrapper)
+                                        physicallyBasedMaterial
                                     },
                                     set: { newValue in
                                         update(oldWrapper: wrapper, newMaterial: newValue)
@@ -120,7 +120,9 @@ struct ModelComponentView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
-                    AddMaterialView(component: $component)
+                    AddMaterialView { material in
+                        materialWrappers.append(MaterialWrapper(id: UUID(), material: material))
+                    }
                 } label: {
                     Label("Add Material", systemImage: "light.overhead.left.fill")
                 }
@@ -199,18 +201,6 @@ struct ModelComponentView: View {
         materialWrappers.remove(at: firstIndex)
         
         self.materialWrappers = materialWrappers
-    }
-    
-    private func currentMaterial<T: RealityFoundation.Material>(for wrapper: MaterialWrapper) -> T {
-        let materialWrappers = materialWrappers
-        
-        guard let firstIndex = materialWrappers.firstIndex(
-            where: { $0.id == wrapper.id }
-        ) else {
-            fatalError()
-        }
-        
-        return materialWrappers[firstIndex].material as! T
     }
 }
 

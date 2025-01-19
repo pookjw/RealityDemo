@@ -32,7 +32,8 @@ struct PhysicallyBasedMaterialView: View {
                         set: { newValue in
                             material.baseColor.tint = newValue
                         }
-                    )
+                    ),
+                    continuously: false
                 )
             } label: {
                 HStack {
