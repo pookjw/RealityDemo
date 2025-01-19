@@ -168,6 +168,7 @@ fileprivate final class MaterialWrapper: Identifiable {
             self[keyPath: _keyPath] as! T
         }
         set {
+            assert(_keyPath == \MaterialWrapper.material)
             self.material = newValue
         }
     }
