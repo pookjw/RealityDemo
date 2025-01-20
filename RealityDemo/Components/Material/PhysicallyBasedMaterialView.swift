@@ -9,6 +9,7 @@ import SwiftUI
 import RealityFoundation
 
 struct PhysicallyBasedMaterialView: View {
+    @Environment(\.openWindow) private var openWindow
     @Binding private var material: PhysicallyBasedMaterial
     private let completionHandler: (() -> Void)?
     @State private var pop = false
@@ -23,25 +24,105 @@ struct PhysicallyBasedMaterialView: View {
     
     var body: some View {
         Form {
-            NavigationLink {
-                UIKitColorPicker(
-                    selectedColor: Binding(
-                        get: {
-                            material.baseColor.tint
-                        },
-                        set: { newValue in
-                            material.baseColor.tint = newValue
+            Section {
+                NavigationLink {
+                    UIKitColorPicker(
+                        selectedColor: $material.baseColor.tint,
+                        continuously: false
+                    )
+                    .overlay(alignment: .bottom) {
+                        Button("Open External Color Picker") {
+#warning("Binding?")
+                            openWindow(id: "ColorPickerWindow", value: CodableColor(material.baseColor.tint))
                         }
-                    ),
-                    continuously: false
-                )
-            } label: {
+                    }
+                } label: {
+                    HStack {
+                        Text("baseColor.tint")
+                        Spacer()
+                        Circle()
+                            .fill(Color(uiColor: material.baseColor.tint))
+                            .frame(width: 25.0, height: 25.0)
+                    }
+                }
+            }
+            
+            Section {
                 HStack {
-                    Text("baseColor.tint")
-                    Spacer()
-                    Circle()
-                        .fill(Color(uiColor: material.baseColor.tint))
-                        .frame(width: 25.0, height: 25.0)
+                    Text("roughness.scale")
+                    Slider(
+                        value: $material.roughness.scale,
+                        in: 0.0...1.0
+                    )
+                }
+                
+                HStack {
+                    Text("metallic.scale")
+                    Slider(
+                        value: $material.metallic.scale,
+                        in: 0.0...1.0
+                    )
+                }
+                
+                HStack {
+                    Text("clearcoat.scale")
+                    Slider(
+                        value: $material.clearcoat.scale,
+                        in: 0.0...1.0
+                    )
+                }
+            }
+            
+            Section {
+                HStack {
+                    Text("specular.scale")
+                    Slider(
+                        value: $material.specular.scale,
+                        in: 0.0...1.0
+                    )
+                }
+                
+                NavigationLink {
+                    UIKitColorPicker(
+                        selectedColor: Binding<UIColor>(
+                            get: {
+                                material.sheen?.tint ?? .clear
+                            },
+                            set: { newValue in
+                                if var sheen = material.sheen {
+                                    sheen.tint = newValue
+                                    material.sheen = sheen
+                                } else {
+                                    material.sheen = PhysicallyBasedMaterial.SheenColor(tint: newValue, texture: nil)
+                                }
+                            }
+                        ),
+                        continuously: false
+                    )
+                } label: {
+                    HStack {
+                        Text("sheen.tint")
+                        Spacer()
+                        Circle()
+                            .fill(Color(uiColor: material.sheen?.tint ?? .clear))
+                            .frame(width: 25.0, height: 25.0)
+                    }
+                }
+                
+                if material.sheen != nil {
+                    Button("sheen = nil") {
+                        material.sheen = nil
+                    }
+                }
+            }
+            
+            Section {
+                HStack {
+                    Text("clearcoatRoughness.scale")
+                    Slider(
+                        value: $material.clearcoatRoughness.scale,
+                        in: 0.0...1.0
+                    )
                 }
             }
         }

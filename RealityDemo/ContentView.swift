@@ -9,7 +9,7 @@ import SwiftUI
 import RealityKit
 
 struct ContentView: View {
-    @Environment(RealityService.self) private var realityService
+    @State private var realityService = RealityService()
     @State private var menuVisibility: Visibility = .visible
     
     var body: some View {
@@ -109,6 +109,7 @@ struct ContentView: View {
                 realityService.stack = stack
             }
         }
+        .environment(realityService)
     }
     
     @ViewBuilder private var toggleButton: some View {

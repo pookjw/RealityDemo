@@ -74,8 +74,8 @@ final class RealityService {
         let entity = defaultEntity()
         rootEntity.addChild(entity)
         stack = [
-            .modelComponent(entity: entity)
-//            .entitySettings(entity: entity),
+//            .modelComponent(entity: entity)
+            .entitySettings(entity: entity),
 //            .collisionComponent(entity: entity)
 //            .physicsBodyComponent(entity: entity)
         ]
@@ -112,12 +112,16 @@ extension RealityService {
         
         entity.name = Date.now.description
         
+        var physicallyBasedMaterial = PhysicallyBasedMaterial()
+        physicallyBasedMaterial.roughness.scale = .zero
+        physicallyBasedMaterial.metallic.scale = 1.0
+        
         entity.model = ModelComponent(
-            mesh: MeshResource.generateBox(size: .init(x: 0.1, y: 0.1, z: 0.1)),
+            mesh: MeshResource.generateBox(size: .init(x: 0.5, y: 0.5, z: 0.5), majorCornerRadius: 0.2, minorCornerRadius: 0.2),
             materials: [
 //                SimpleMaterial(color: .init(white: .zero, alpha: 1.0), isMetallic: true)
 //                UnlitMaterial(color: .red)
-                PhysicallyBasedMaterial()
+                physicallyBasedMaterial
             ]
         )
         

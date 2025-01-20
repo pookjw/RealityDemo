@@ -109,6 +109,7 @@ struct UIKitColorPicker: UIViewControllerRepresentable {
         uiViewController.allowsNoColor = allowsNoColor
         uiViewController.supportsEyedropper = supportsEyedropper
         uiViewController.showsGridOnly = showsGridOnly
+        
         if let selectedColor = didSelectColor.selectedColor {
             uiViewController.selectedColor = selectedColor
         }

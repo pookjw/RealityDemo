@@ -9,13 +9,27 @@ import SwiftUI
 
 @main
 struct RealityDemoApp: App {
-    @State private var realityService = RealityService()
+    @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
+    @Environment(\.colorPickerBindingMap) private var colorPickerBindingMap
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(realityService)
         }
         .windowStyle(.volumetric)
+        
+        WindowGroup("ColorPickerWindow", for: CodableColor.self) { color in
+            UIKitColorPicker(
+                selectedColor: Binding<UIColor>(
+                    get: {
+                        color.wrappedValue?.uiKit ?? .clear
+                    },
+                    set: { newValue in
+                        color.wrappedValue = CodableColor(newValue)
+                    }
+                )
+            )
+        }
+        .windowStyle(.plain)
     }
 }

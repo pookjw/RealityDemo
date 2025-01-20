@@ -163,13 +163,12 @@ fileprivate final class MaterialWrapper: Identifiable {
         self.material = material
     }
     
-    subscript<T: RealityFoundation.Material>(_keyPath: WritableKeyPath<MaterialWrapper, any RealityFoundation.Material>) -> T {
+    subscript<T: RealityFoundation.Material>(_keyPath: ReferenceWritableKeyPath<MaterialWrapper, any RealityFoundation.Material>) -> T {
         get {
             self[keyPath: _keyPath] as! T
         }
         set {
-            assert(_keyPath == \MaterialWrapper.material)
-            self.material = newValue
+            self[keyPath: _keyPath] = newValue
         }
     }
 }
