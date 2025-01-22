@@ -7,17 +7,21 @@
 
 import SwiftUI
 
-#warning("REMOVE")
-
 extension EnvironmentValues {
     @Entry private(set) var colorPickerBindingMap = UIKitColorPickerBindingMap.shared
 }
 
 @MainActor
 final class UIKitColorPickerBindingMap {
-    fileprivate static nonisolated let shared = UIKitColorPickerBindingMap()
+    static nonisolated let shared = UIKitColorPickerBindingMap()
     
     var bindings: [UUID: Binding<UIColor>] = [:]
     
-    fileprivate nonisolated init() {}
+    private nonisolated init() {}
+}
+
+extension UIKitColorPickerBindingMap: Equatable {
+    static nonisolated func == (lhs: UIKitColorPickerBindingMap, rhs: UIKitColorPickerBindingMap) -> Bool {
+        Unmanaged.passUnretained(lhs).toOpaque() == Unmanaged.passUnretained(rhs).toOpaque()
+    }
 }

@@ -10,7 +10,6 @@ import SwiftUI
 @main
 struct RealityDemoApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
-    @Environment(\.colorPickerBindingMap) private var colorPickerBindingMap
     
     var body: some Scene {
         WindowGroup {
@@ -18,17 +17,17 @@ struct RealityDemoApp: App {
         }
         .windowStyle(.volumetric)
         
-        WindowGroup("ColorPickerWindow", for: CodableColor.self) { color in
-            UIKitColorPicker(
-                selectedColor: Binding<UIColor>(
-                    get: {
-                        color.wrappedValue?.uiKit ?? .clear
-                    },
-                    set: { newValue in
-                        color.wrappedValue = CodableColor(newValue)
-                    }
-                )
-            )
+        WindowGroup("ColorPickerWindow", for: UUID.self) { key in
+            Group {
+                if let wrappedValue = key.wrappedValue,
+                   let binding = UIKitColorPickerBindingMap.shared.bindings[wrappedValue] {
+                    UIKitColorPicker(selectedColor: binding)
+                } else {
+                    Text("No Binding!")
+                        .padding()
+                }
+            }
+            .glassBackgroundEffect()
         }
         .windowStyle(.plain)
     }

@@ -9,10 +9,10 @@ import SwiftUI
 import RealityFoundation
 
 struct PhysicallyBasedMaterialView: View {
-    @Environment(\.openWindow) private var openWindow
     @Binding private var material: PhysicallyBasedMaterial
     private let completionHandler: (() -> Void)?
     @State private var pop = false
+    @State private var key = UUID()
     
     init(
         material: Binding<PhysicallyBasedMaterial>,
@@ -30,10 +30,11 @@ struct PhysicallyBasedMaterialView: View {
                         selectedColor: $material.baseColor.tint,
                         continuously: false
                     )
-                    .overlay(alignment: .bottom) {
-                        Button("Open External Color Picker") {
-#warning("Binding?")
-                            openWindow(id: "ColorPickerWindow", value: CodableColor(material.baseColor.tint))
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Open External Color Picker", systemImage: "arrow.up.forward.app") {
+                                openExternalColorPickerWindow()
+                            }
                         }
                     }
                 } label: {
@@ -138,5 +139,29 @@ struct PhysicallyBasedMaterialView: View {
                 }
             }
             .pop(pop)
+    }
+    
+    private func openExternalColorPickerWindow() {
+        let userActivity = NSUserActivity(activityType: "\(Bundle.main.bundleIdentifier!).openWindowByID")
+        
+        let key = key
+        let encoder = JSONEncoder()
+        let data = try! encoder.encode(key)
+        userActivity.userInfo = [
+            "com.apple.SwiftUI.sceneValue": data,
+            "com.apple.SwiftUI.sceneID": "ColorPickerWindow"
+        ]
+        
+        UIKitColorPickerBindingMap.shared.bindings[key] = $material.baseColor.tint
+        
+        let request = UISceneSessionActivationRequest(
+            role: .windowApplication,
+            userActivity: userActivity,
+            options: nil
+        )
+        
+        UIApplication.shared.activateSceneSession(for: request) { error in
+            fatalError("\(error)")
+        }
     }
 }
